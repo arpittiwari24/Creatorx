@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Video Captions</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            width: 100%;
+            max-width: 400px;
+            min-height: 600px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff6b6b, #feca57);
+            padding: 20px;
+            text-align: center;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .content {
+            padding: 30px;
+            text-align: center;
+        }
+
+        .upload-area {
+            border: 3px dashed #ddd;
+            border-radius: 15px;
+            padding: 40px 20px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .upload-area:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #667eea;
+            background: #f0f4ff;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            color: #ddd;
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .upload-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: transform 0.2s ease;
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .settings {
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .setting-group {
+            margin-bottom: 15px;
+        }
+
+        .setting-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .setting-group input, .setting-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #eee;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .progress-container {
+            display: none;
+            margin: 20px 0;
+        }
+
+        .progress-bar {
+            background: #eee;
+            border-radius: 10px;
+            overflow: hidden;
+            height: 20px;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .progress-text {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .video-player {
+            display: none;
+            background: #000;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .video-player video {
+            width: 100%;
+            height: 600px;
+            object-fit: cover;
+        }
+
+        .download-btn {
+            background: linear-gradient(135deg, #ff6b6b, #feca57);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
+            margin-top: 15px;
+            transition: transform 0.2s ease;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .reset-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+            transition: transform 0.2s ease;
+        }
+
+        .reset-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .error-message {
+            background: #ff6b6b;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            display: none;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .processing {
+            animation: pulse 2s infinite;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                margin: 10px;
+                max-width: none;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎬 AI Video Captions</h1>
+            <p>Add automatic captions to your videos</p>
+        </div>
+        
+        <div class="content">
+            <!-- Upload Section -->
+            <div id="uploadSection">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📱</div>
+                    <div class="upload-text">Drag & drop your video here</div>
+                    <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                        Choose Video
+                    </button>
+                    <input type="file" id="fileInput" class="file-input" accept="video/*">
+                </div>
+                
+                <div class="settings">
+                    <div class="setting-group">
+                        <label for="fontSize">Font Size</label>
+                        <input type="number" id="fontSize" value="24" min="16" max="48">
+                    </div>
+                    <div class="setting-group">
+                        <label for="fontColor">Font Color</label>
+                        <select id="fontColor">
+                            <option value="white">White</option>
+                            <option value="black">Black</option>
+                            <option value="yellow">Yellow</option>
+                            <option value="red">Red</option>
+                            <option value="blue">Blue</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <button class="upload-btn" id="processBtn" style="width: 100%; display: none;">
+                    🚀 Process Video
+                </button>
+            </div>
+            
+            <!-- Progress Section -->
+            <div class="progress-container" id="progressSection">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill">0%</div>
+                </div>
+                <div class="progress-text" id="progressText">Processing your video...</div>
+            </div>
+            
+            <!-- Video Player Section -->
+            <div class="video-player" id="videoPlayer">
+                <video id="processedVideo" controls></video>
+            </div>
+            
+            <!-- Download Section -->
+            <div id="downloadSection" style="display: none;">
+                <button class="download-btn" id="downloadBtn">
+                    ⬇️ Download Video
+                </button>
+                <button class="reset-btn" id="resetBtn">
+                    🔄 Process Another Video
+                </button>
+            </div>
+            
+            <!-- Error Message -->
+            <div class="error-message" id="errorMessage"></div>
+        </div>
+    </div>
+
+    <script>
+        let selectedFile = null;
+        let processedVideoUrl = null;
+
+        // DOM Elements
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const processBtn = document.getElementById('processBtn');
+        const uploadSection = document.getElementById('uploadSection');
+        const progressSection = document.getElementById('progressSection');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const videoPlayer = document.getElementById('videoPlayer');
+        const processedVideo = document.getElementById('processedVideo');
+        const downloadSection = document.getElementById('downloadSection');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const errorMessage = document.getElementById('errorMessage');
+        const fontSize = document.getElementById('fontSize');
+        const fontColor = document.getElementById('fontColor');
+
+        // Drag and drop functionality
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileSelect(files[0]);
+            }
+        });
+
+        // File input change
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+
+        // Handle file selection
+        function handleFileSelect(file) {
+            if (!file.type.startsWith('video/')) {
+                showError('Please select a valid video file');
+                return;
+            }
+
+            if (file.size > 100 * 1024 * 1024) { // 100MB limit
+                showError('File size should be less than 100MB');
+                return;
+            }
+
+            selectedFile = file;
+            document.querySelector('.upload-text').textContent = `Selected: ${file.name}`;
+            processBtn.style.display = 'block';
+            hideError();
+        }
+
+        // Process video
+        processBtn.addEventListener('click', async () => {
+            if (!selectedFile) {
+                showError('Please select a video file first');
+                return;
+            }
+
+            uploadSection.style.display = 'none';
+            progressSection.style.display = 'block';
+            
+            try {
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+                formData.append('font_size', fontSize.value);
+                formData.append('font_color', fontColor.value);
+
+                // Simulate progress updates
+                let progress = 0;
+                const progressInterval = setInterval(() => {
+                    progress += Math.random() * 15;
+                    if (progress > 95) progress = 95;
+                    updateProgress(progress, 'Processing video...');
+                }, 1000);
+
+                const response = await fetch('/upload/', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                clearInterval(progressInterval);
+
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status}`);
+                }
+
+                updateProgress(100, 'Complete!');
+                
+                // Create blob URL for the processed video
+                const videoBlob = await response.blob();
+                processedVideoUrl = URL.createObjectURL(videoBlob);
+                
+                setTimeout(() => {
+                    showProcessedVideo();
+                }, 500);
+
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Failed to process video. Please try again.');
+                resetToUpload();
+            }
+        });
+
+        // Update progress
+        function updateProgress(percent, text) {
+            progressFill.style.width = `${percent}%`;
+            progressFill.textContent = `${Math.round(percent)}%`;
+            progressText.textContent = text;
+            
+            if (percent >= 100) {
+                progressSection.classList.add('processing');
+            }
+        }
+
+        // Show processed video
+        function showProcessedVideo() {
+            progressSection.style.display = 'none';
+            videoPlayer.style.display = 'block';
+            downloadSection.style.display = 'block';
+            
+            processedVideo.src = processedVideoUrl;
+            processedVideo.load();
+        }
+
+        // Download video
+        downloadBtn.addEventListener('click', () => {
+            if (processedVideoUrl) {
+                const a = document.createElement('a');
+                a.href = processedVideoUrl;
+                a.download = `captioned_${selectedFile.name}`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }
+        });
+
+        // Reset to upload
+        resetBtn.addEventListener('click', resetToUpload);
+
+        function resetToUpload() {
+            selectedFile = null;
+            processedVideoUrl = null;
+            
+            uploadSection.style.display = 'block';
+            progressSection.style.display = 'none';
+            videoPlayer.style.display = 'none';
+            downloadSection.style.display = 'none';
+            processBtn.style.display = 'none';
+            
+            progressSection.classList.remove('processing');
+            document.querySelector('.upload-text').textContent = 'Drag & drop your video here';
+            fileInput.value = '';
+            
+            hideError();
+        }
+
+        // Error handling
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
+
+        function hideError() {
+            errorMessage.style.display = 'none';
+        }
+
+        // Clean up blob URLs when page unloads
+        window.addEventListener('beforeunload', () => {
+            if (processedVideoUrl) {
+                URL.revokeObjectURL(processedVideoUrl);
+            }
+        });
+    </script>
+</body>
+</html>
