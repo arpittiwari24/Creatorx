@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thumbnail Creator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            height: 100vh;
+            background: #fafafa;
+            color: #0a0a0a;
+            line-height: 1.5;
+            overflow: hidden;
+        }
+
+        .main-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 16px 20px;
+            flex-shrink: 0;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 20px;
+            font-weight: 600;
+            color: #0a0a0a;
+        }
+
+        .nav-link {
+            background: #0a0a0a;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: background-color 0.2s;
+        }
+
+        .nav-link:hover {
+            background: #1a1a1a;
+        }
+
+        .content {
+            flex: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            width: 100%;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .upload-section {
+            text-align: center;
+            padding: 32px;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .upload-title {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #0a0a0a;
+        }
+
+        .upload-subtitle {
+            font-size: 16px;
+            color: #6b7280;
+            margin-bottom: 24px;
+        }
+
+        .main-content {
+            display: flex;
+            gap: 24px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .canvas-section {
+            flex: 0 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .controls-section {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .upload-area {
+            border: 2px dashed #d1d5db;
+            border-radius: 12px;
+            padding: 32px 24px;
+            margin-bottom: 24px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            background: #f9fafb;
+        }
+
+        .upload-area:hover {
+            border-color: #6b7280;
+            background: #f3f4f6;
+        }
+
+        .upload-area.dragover {
+            border-color: #0a0a0a;
+            background: #f1f5f9;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            color: #9ca3af;
+            margin-bottom: 16px;
+        }
+
+        .upload-text {
+            color: #374151;
+            font-size: 16px;
+            margin-bottom: 16px;
+            font-weight: 500;
+        }
+
+        .upload-subtext {
+            color: #6b7280;
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .btn-primary {
+            background: #0a0a0a;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary:hover {
+            background: #1a1a1a;
+        }
+
+        .video-controls {
+            display: none;
+            margin-bottom: 16px;
+        }
+
+        .video-player {
+            display: none;
+        }
+
+        .timeline {
+            width: 100%;
+            height: 100px;
+            background: #f9fafb;
+            border-radius: 12px;
+            margin: 12px 0;
+            position: relative;
+            overflow-x: auto;
+            border: 1px solid #e5e7eb;
+        }
+
+        .frame-strip {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            gap: 8px;
+            min-width: max-content;
+        }
+
+        .frame-thumbnail {
+            width: 76px;
+            height: 76px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s ease;
+            object-fit: cover;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+        }
+
+        .frame-thumbnail:hover {
+            border-color: #6b7280;
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        .frame-thumbnail.selected {
+            border-color: #0a0a0a;
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .canvas-container {
+            display: none;
+            text-align: center;
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .thumbnail-canvas {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            cursor: crosshair;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            max-width: 320px;
+            height: auto;
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            display: inline-block;
+            background: white;
+            border-radius: 8px;
+        }
+
+        .text-controls {
+            display: none;
+            flex: 1;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            overflow-y: auto;
+        }
+
+        .controls-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #0a0a0a;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #374151;
+            font-size: 14px;
+        }
+
+        .control-group input,
+        .control-group select,
+        .control-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            transition: border-color 0.2s;
+        }
+
+        .control-group input:focus,
+        .control-group select:focus,
+        .control-group textarea:focus {
+            outline: none;
+            border-color: #0a0a0a;
+            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .control-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .range-input {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #f3f4f6;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .range-input::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #0a0a0a;
+            cursor: pointer;
+        }
+
+        .color-inputs {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .color-input {
+            width: 48px;
+            height: 48px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .download-btn {
+            background: #0a0a0a;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            margin-top: 16px;
+            transition: background-color 0.2s;
+            display: none;
+            gap: 8px;
+            align-items: center;
+            justify-content: center;
+            width: 50%;
+            margin-left: auto; 
+        }
+
+        .download-btn:hover {
+            background: #1a1a1a;
+        }
+
+        .instructions {
+            background: #f0f9ff;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            color: #0369a1;
+            font-size: 14px;
+            border: 1px solid #e0f2fe;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                flex-direction: column;
+                gap: 16px;
+            }
+            
+            .canvas-section {
+                order: 1;
+            }
+            
+            .controls-section {
+                order: 2;
+            }
+            
+            .thumbnail-canvas {
+                max-width: 280px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                padding: 16px;
+                gap: 12px;
+            }
+            
+            .upload-section {
+                padding: 24px;
+            }
+            
+            .frame-thumbnail {
+                width: 60px;
+                height: 60px;
+            }
+            
+            .thumbnail-canvas {
+                max-width: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-content">
+                <div class="logo">
+                    🖼️ Thumbnail Creator
+                </div>
+                <a href="/" class="nav-link">
+                    🎬 Back to Captions
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content">
+            <!-- Upload Section -->
+            <div id="uploadSection" class="upload-section">
+                <h1 class="upload-title">Create Custom Thumbnails</h1>
+                <p class="upload-subtitle">Upload a video and create professional thumbnails with custom text</p>
+                
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">🎥</div>
+                    <div class="upload-text">Drag and drop your video here</div>
+                    <div class="upload-subtext">Supports MP4, MOV, AVI files up to 100MB</div>
+                    <button class="btn-primary" onclick="document.getElementById('fileInput').click()">
+                        Choose Video File
+                    </button>
+                    <input type="file" id="fileInput" class="file-input" accept="video/*">
+                </div>
+                
+                <div class="instructions">
+                    <strong>How it works:</strong> Upload video → Select frame → Add text → Customize style → Download thumbnail
+                </div>
+            </div>
+            
+            <!-- Video Controls -->
+            <div id="videoControls" class="video-controls">
+                <video id="videoPlayer" class="video-player"></video>
+                
+                <div class="timeline" id="timeline">
+                    <div class="frame-strip" id="frameStrip">
+                        <!-- Frame thumbnails will be generated here -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Main Content Layout -->
+            <div id="mainContent" class="main-content" style="display: none;">
+                <!-- Canvas Section -->
+                <div class="canvas-section">
+                    <div id="canvasContainer" class="canvas-container">
+                        <div class="canvas-wrapper">
+                            <canvas id="thumbnailCanvas" class="thumbnail-canvas" width="405" height="720"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Controls Section -->
+                <div class="controls-section">
+                    <div id="textControls" class="text-controls">
+                        <div class="controls-title">✨ Text Customization</div>
+                        
+                        <div class="control-group">
+                            <label for="textInput">Text Content:</label>
+                            <textarea id="textInput" placeholder="Click on the image to add text..."></textarea>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="fontSize">Font Size:</label>
+                            <input type="range" id="fontSize" min="16" max="80" value="40">
+                            <span id="fontSizeValue">40px</span>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="fontFamily">Font Family:</label>
+                            <select id="fontFamily">
+                                <option value="Arial Black">Arial Black</option>
+                                <option value="Impact">Impact</option>
+                                <option value="Arial">Arial</option>
+                                <option value="Helvetica">Helvetica</option>
+                                <option value="Georgia">Georgia</option>
+                                <option value="Times New Roman">Times New Roman</option>
+                            </select>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label>Text Color:</label>
+                            <div class="color-inputs">
+                                <input type="color" id="textColor" class="color-input" value="#ffffff">
+                                <label for="textColor">Text</label>
+                            </div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label>Stroke Color:</label>
+                            <div class="color-inputs">
+                                <input type="color" id="strokeColor" class="color-input" value="#000000">
+                                <label for="strokeColor">Outline</label>
+                            </div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="strokeWidth">Outline Width:</label>
+                            <input type="range" id="strokeWidth" min="0" max="8" value="3">
+                            <span id="strokeWidthValue">3px</span>
+                        </div>
+                        
+                        <div class="control-group">
+                            <button id="addTextBtn" class="upload-btn" style="width: 100%; margin-top: 10px;">
+                                ➕ Add Text
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Download Button -->
+            <button id="downloadBtn" class="download-btn">
+                ⬇️ Download Thumbnail
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let selectedFile = null;
+        let selectedFrame = null;
+        let video = null;
+        let canvas = null;
+        let ctx = null;
+        let textObjects = [];
+        let isDragging = false;
+        let dragTarget = null;
+        let dragOffset = { x: 0, y: 0 };
+        let selectedText = null;
+
+        // DOM Elements
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const uploadSection = document.getElementById('uploadSection');
+        const videoControls = document.getElementById('videoControls');
+        const videoPlayer = document.getElementById('videoPlayer');
+        const frameStrip = document.getElementById('frameStrip');
+        const mainContent = document.getElementById('mainContent');
+        const canvasContainer = document.getElementById('canvasContainer');
+        const textControls = document.getElementById('textControls');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const addTextBtn = document.getElementById('addTextBtn');
+        
+        // Text controls
+        const textInput = document.getElementById('textInput');
+        const fontSize = document.getElementById('fontSize');
+        const fontSizeValue = document.getElementById('fontSizeValue');
+        const fontFamily = document.getElementById('fontFamily');
+        const textColor = document.getElementById('textColor');
+        const strokeColor = document.getElementById('strokeColor');
+        const strokeWidth = document.getElementById('strokeWidth');
+        const strokeWidthValue = document.getElementById('strokeWidthValue');
+
+        // Initialize
+        function init() {
+            canvas = document.getElementById('thumbnailCanvas');
+            ctx = canvas.getContext('2d');
+            video = videoPlayer;
+            
+            setupEventListeners();
+        }
+
+        function setupEventListeners() {
+            // Upload functionality
+            uploadArea.addEventListener('dragover', handleDragOver);
+            uploadArea.addEventListener('dragleave', handleDragLeave);
+            uploadArea.addEventListener('drop', handleDrop);
+            fileInput.addEventListener('change', handleFileSelect);
+            
+            // Canvas interactions
+            canvas.addEventListener('click', handleCanvasClick);
+            canvas.addEventListener('mousedown', handleMouseDown);
+            canvas.addEventListener('mousemove', handleMouseMove);
+            canvas.addEventListener('mouseup', handleMouseUp);
+            
+            // Text control changes
+            textInput.addEventListener('input', updateSelectedText);
+            fontSize.addEventListener('input', updateFontSize);
+            fontFamily.addEventListener('change', updateSelectedText);
+            textColor.addEventListener('change', updateSelectedText);
+            strokeColor.addEventListener('change', updateSelectedText);
+            strokeWidth.addEventListener('input', updateStrokeWidth);
+            
+            // Add text button
+            addTextBtn.addEventListener('click', addTextToCenter);
+            
+            // Download
+            downloadBtn.addEventListener('click', downloadThumbnail);
+        }
+
+        // File handling
+        function handleDragOver(e) {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        }
+
+        function handleDragLeave() {
+            uploadArea.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                processFile(files[0]);
+            }
+        }
+
+        function handleFileSelect(e) {
+            if (e.target.files.length > 0) {
+                processFile(e.target.files[0]);
+            }
+        }
+
+        function processFile(file) {
+            if (!file.type.startsWith('video/')) {
+                alert('Please select a valid video file');
+                return;
+            }
+
+            selectedFile = file;
+            const videoUrl = URL.createObjectURL(file);
+            video.src = videoUrl;
+            
+            video.onloadedmetadata = function() {
+                generateFrameThumbnails();
+                uploadSection.style.display = 'none';
+                videoControls.style.display = 'block';
+            };
+        }
+
+        // Generate frame thumbnails
+        function generateFrameThumbnails() {
+            const duration = video.duration;
+            const frameCount = Math.min(15, Math.floor(duration * 2)); // More frames for better selection
+            const interval = duration / frameCount;
+            
+            frameStrip.innerHTML = '';
+            let framesGenerated = 0;
+            
+            for (let i = 0; i < frameCount; i++) {
+                const time = i * interval;
+                setTimeout(() => {
+                    createFrameThumbnail(time, i, frameCount);
+                }, i * 100); // Stagger frame generation
+            }
+        }
+
+        function createFrameThumbnail(time, index, totalFrames) {
+            return new Promise((resolve) => {
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCanvas.width = 90;
+                tempCanvas.height = 90;
+                
+                video.currentTime = time;
+                
+                const handleSeeked = () => {
+                    video.removeEventListener('seeked', handleSeeked);
+                    
+                    // Draw frame to canvas
+                    tempCtx.drawImage(video, 0, 0, 90, 90);
+                    
+                    // Create thumbnail image
+                    const img = document.createElement('img');
+                    img.src = tempCanvas.toDataURL();
+                    img.className = 'frame-thumbnail';
+                    img.dataset.time = time;
+                    img.dataset.index = index;
+                    
+                    img.addEventListener('click', function() {
+                        selectFrame(this);
+                    });
+                    
+                    frameStrip.appendChild(img);
+                    
+                    // Select first frame automatically
+                    if (index === 0) {
+                        setTimeout(() => selectFrame(img), 100);
+                    }
+                    
+                    resolve();
+                };
+                
+                video.addEventListener('seeked', handleSeeked);
+            });
+        }
+
+        function selectFrame(frameImg) {
+            // Remove previous selection
+            document.querySelectorAll('.frame-thumbnail').forEach(thumb => {
+                thumb.classList.remove('selected');
+            });
+            
+            // Select new frame
+            frameImg.classList.add('selected');
+            selectedFrame = parseFloat(frameImg.dataset.time);
+            
+            // Update canvas with selected frame
+            video.currentTime = selectedFrame;
+            
+            const handleSeeked = () => {
+                video.removeEventListener('seeked', handleSeeked);
+                drawCanvas();
+                
+                // Show main content after first frame selection
+                if (mainContent.style.display === 'none') {
+                    mainContent.style.display = 'flex';
+                    canvasContainer.style.display = 'block';
+                    textControls.style.display = 'block';
+                    downloadBtn.style.display = 'block';
+                }
+            };
+            
+            video.addEventListener('seeked', handleSeeked);
+        }
+
+        function drawCanvas() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw video frame (fit to canvas maintaining aspect ratio)
+            const videoAspect = video.videoWidth / video.videoHeight;
+            const canvasAspect = canvas.width / canvas.height;
+            
+            let drawWidth, drawHeight, drawX, drawY;
+            
+            if (videoAspect > canvasAspect) {
+                // Video is wider than canvas
+                drawHeight = canvas.height;
+                drawWidth = drawHeight * videoAspect;
+                drawX = (canvas.width - drawWidth) / 2;
+                drawY = 0;
+            } else {
+                // Video is taller than canvas
+                drawWidth = canvas.width;
+                drawHeight = drawWidth / videoAspect;
+                drawX = 0;
+                drawY = (canvas.height - drawHeight) / 2;
+            }
+            
+            ctx.drawImage(video, drawX, drawY, drawWidth, drawHeight);
+            
+            // Draw all text objects
+            textObjects.forEach(textObj => {
+                drawText(textObj);
+            });
+        }
+
+        function drawText(textObj) {
+            ctx.save();
+            
+            ctx.font = `${textObj.fontSize}px ${textObj.fontFamily}`;
+            ctx.fillStyle = textObj.color;
+            ctx.strokeStyle = textObj.strokeColor;
+            ctx.lineWidth = textObj.strokeWidth;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // Split text into lines for better formatting
+            const lines = textObj.text.split('\n');
+            const lineHeight = textObj.fontSize * 1.2;
+            
+            lines.forEach((line, index) => {
+                const y = textObj.y + (index - (lines.length - 1) / 2) * lineHeight;
+                
+                // Draw stroke first
+                if (textObj.strokeWidth > 0) {
+                    ctx.strokeText(line, textObj.x, y);
+                }
+                
+                // Draw fill
+                ctx.fillText(line, textObj.x, y);
+            });
+            
+            ctx.restore();
+        }
+
+        // Canvas interactions
+        function handleCanvasClick(e) {
+            if (isDragging) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+            const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+            
+            // Check if clicking on existing text
+            const clickedText = findTextAtPosition(x, y);
+            
+            if (clickedText) {
+                // Select existing text
+                selectText(clickedText);
+            } else {
+                // Create new text
+                createNewText(x, y);
+            }
+        }
+
+        function handleMouseDown(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+            const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+            
+            const textObj = findTextAtPosition(x, y);
+            if (textObj) {
+                isDragging = true;
+                dragTarget = textObj;
+                dragOffset.x = x - textObj.x;
+                dragOffset.y = y - textObj.y;
+                canvas.style.cursor = 'grabbing';
+            }
+        }
+
+        function handleMouseMove(e) {
+            if (!isDragging || !dragTarget) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+            const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+            
+            dragTarget.x = x - dragOffset.x;
+            dragTarget.y = y - dragOffset.y;
+            
+            drawCanvas();
+        }
+
+        function handleMouseUp() {
+            isDragging = false;
+            dragTarget = null;
+            canvas.style.cursor = 'crosshair';
+        }
+
+        function findTextAtPosition(x, y) {
+            for (let i = textObjects.length - 1; i >= 0; i--) {
+                const textObj = textObjects[i];
+                ctx.font = `${textObj.fontSize}px ${textObj.fontFamily}`;
+                const textWidth = ctx.measureText(textObj.text).width;
+                const textHeight = textObj.fontSize;
+                
+                if (x >= textObj.x - textWidth/2 && x <= textObj.x + textWidth/2 &&
+                    y >= textObj.y - textHeight/2 && y <= textObj.y + textHeight/2) {
+                    return textObj;
+                }
+            }
+            return null;
+        }
+
+        function createNewText(x, y) {
+            const defaultText = textInput.value || 'Your Text Here';
+            const textObj = {
+                text: defaultText,
+                x: x,
+                y: y,
+                fontSize: parseInt(fontSize.value),
+                fontFamily: fontFamily.value,
+                color: textColor.value,
+                strokeColor: strokeColor.value,
+                strokeWidth: parseInt(strokeWidth.value)
+            };
+            
+            textObjects.push(textObj);
+            selectText(textObj);
+            drawCanvas();
+        }
+
+        function addTextToCenter() {
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            createNewText(centerX, centerY);
+        }
+
+        function selectText(textObj) {
+            selectedText = textObj;
+            
+            // Update controls to match selected text
+            textInput.value = textObj.text;
+            fontSize.value = textObj.fontSize;
+            fontSizeValue.textContent = textObj.fontSize + 'px';
+            fontFamily.value = textObj.fontFamily;
+            textColor.value = textObj.color;
+            strokeColor.value = textObj.strokeColor;
+            strokeWidth.value = textObj.strokeWidth;
+            strokeWidthValue.textContent = textObj.strokeWidth + 'px';
+        }
+
+        function updateSelectedText() {
+            if (!selectedText) return;
+            
+            selectedText.text = textInput.value || 'Your Text Here';
+            selectedText.fontSize = parseInt(fontSize.value);
+            selectedText.fontFamily = fontFamily.value;
+            selectedText.color = textColor.value;
+            selectedText.strokeColor = strokeColor.value;
+            selectedText.strokeWidth = parseInt(strokeWidth.value);
+            
+            drawCanvas();
+        }
+
+        function updateFontSize() {
+            fontSizeValue.textContent = fontSize.value + 'px';
+            updateSelectedText();
+        }
+
+        function updateStrokeWidth() {
+            strokeWidthValue.textContent = strokeWidth.value + 'px';
+            updateSelectedText();
+        }
+
+        function downloadThumbnail() {
+            const link = document.createElement('a');
+            link.download = `thumbnail_${Date.now()}.png`;
+            link.href = canvas.toDataURL('image/png', 1.0);
+            link.click();
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

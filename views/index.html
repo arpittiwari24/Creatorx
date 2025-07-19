@@ -12,445 +12,793 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
+            background: #fafafa;
+            color: #0a0a0a;
+            line-height: 1.5;
         }
 
-        .container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            overflow: hidden;
-            width: 100%;
-            max-width: 400px;
-            min-height: 600px;
+        .main-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
         .header {
-            background: linear-gradient(135deg, #ff6b6b, #feca57);
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
             padding: 20px;
-            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 20px;
+            font-weight: 600;
+            color: #0a0a0a;
+        }
+
+        .nav-link {
+            background: #0a0a0a;
             color: white;
-        }
-
-        .header h1 {
-            font-size: 24px;
-            margin-bottom: 5px;
-        }
-
-        .header p {
-            opacity: 0.9;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
             font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: background-color 0.2s;
+        }
+
+        .nav-link:hover {
+            background: #1a1a1a;
         }
 
         .content {
-            padding: 30px;
+            flex: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            width: 100%;
+        }
+
+        /* Upload Section */
+        .upload-section {
             text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .upload-title {
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #0a0a0a;
+        }
+
+        .upload-subtitle {
+            font-size: 16px;
+            color: #6b7280;
+            margin-bottom: 32px;
         }
 
         .upload-area {
-            border: 3px dashed #ddd;
-            border-radius: 15px;
-            padding: 40px 20px;
-            margin-bottom: 20px;
-            transition: all 0.3s ease;
+            border: 2px dashed #d1d5db;
+            border-radius: 12px;
+            padding: 48px 24px;
+            margin-bottom: 24px;
+            transition: all 0.2s ease;
             cursor: pointer;
+            background: white;
         }
 
         .upload-area:hover {
-            border-color: #667eea;
-            background: #f8f9ff;
+            border-color: #6b7280;
+            background: #f9fafb;
         }
 
         .upload-area.dragover {
-            border-color: #667eea;
-            background: #f0f4ff;
-            transform: scale(1.02);
+            border-color: #0a0a0a;
+            background: #f3f4f6;
         }
 
         .upload-icon {
             font-size: 48px;
-            color: #ddd;
-            margin-bottom: 15px;
+            color: #9ca3af;
+            margin-bottom: 16px;
         }
 
         .upload-text {
-            color: #666;
+            color: #374151;
             font-size: 16px;
-            margin-bottom: 15px;
+            margin-bottom: 16px;
+            font-weight: 500;
+        }
+
+        .upload-subtext {
+            color: #6b7280;
+            font-size: 14px;
+            margin-bottom: 24px;
         }
 
         .file-input {
             display: none;
         }
 
-        .upload-btn {
-            background: linear-gradient(135deg, #667eea, #764ba2);
+        .btn-primary {
+            background: #0a0a0a;
             color: white;
             border: none;
             padding: 12px 24px;
-            border-radius: 25px;
+            border-radius: 8px;
             cursor: pointer;
             font-size: 16px;
-            transition: transform 0.2s ease;
+            font-weight: 500;
+            transition: background-color 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .upload-btn:hover {
-            transform: translateY(-2px);
+        .btn-primary:hover {
+            background: #1a1a1a;
         }
 
-        .settings {
-            margin: 20px 0;
-            text-align: left;
-        }
-
-        .setting-group {
-            margin-bottom: 15px;
-        }
-
-        .setting-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
-            color: #333;
-        }
-
-        .setting-group input, .setting-group select {
-            width: 100%;
-            padding: 10px;
-            border: 2px solid #eee;
+        .btn-secondary {
+            background: white;
+            color: #0a0a0a;
+            border: 1px solid #d1d5db;
+            padding: 12px 24px;
             border-radius: 8px;
-            font-size: 14px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .progress-container {
+        .btn-secondary:hover {
+            background: #f9fafb;
+            border-color: #9ca3af;
+        }
+
+        /* Progress Section */
+        .progress-section {
             display: none;
-            margin: 20px 0;
+            text-align: center;
+            margin: 40px 0;
+        }
+
+        .progress-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #0a0a0a;
         }
 
         .progress-bar {
-            background: #eee;
-            border-radius: 10px;
+            background: #f3f4f6;
+            border-radius: 8px;
             overflow: hidden;
-            height: 20px;
-            margin-bottom: 10px;
+            height: 8px;
+            margin: 24px 0;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         .progress-fill {
-            background: linear-gradient(90deg, #667eea, #764ba2);
+            background: #0a0a0a;
             height: 100%;
             width: 0%;
             transition: width 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 12px;
-            font-weight: bold;
         }
 
         .progress-text {
-            color: #666;
+            color: #6b7280;
             font-size: 14px;
+        }
+
+        /* Editor Section */
+        .editor-section {
+            display: none;
+            gap: 40px;
+            align-items: flex-start;
+        }
+
+        .video-preview {
+            flex: 0 0 auto;
+            text-align: center;
+        }
+
+        .video-container {
+            position: relative;
+            width: 315px;
+            height: 560px;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 0 auto 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
         }
 
         .video-player {
-            display: none;
-            background: #000;
-            border-radius: 5px;
-            overflow: hidden;
-            margin-bottom: 20px;
-            position: relative;
-        }
-
-        .video-player video {
             width: 100%;
-            height: 598px;
+            height: 100%;
             object-fit: cover;
         }
 
-        .download-btn {
-            background: linear-gradient(135deg, #ff6b6b, #feca57);
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            width: 100%;
-            margin-top: 15px;
-            transition: transform 0.2s ease;
+        .controls-panel {
+            flex: 1;
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            border: 1px solid #e5e7eb;
         }
 
-        .download-btn:hover {
-            transform: translateY(-2px);
+        .control-group {
+            margin-bottom: 24px;
         }
 
-        .reset-btn {
-            background: #6c757d;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 20px;
-            cursor: pointer;
+        .control-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #374151;
             font-size: 14px;
-            margin-top: 10px;
-            transition: transform 0.2s ease;
         }
 
-        .reset-btn:hover {
-            transform: translateY(-1px);
+        .control-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 16px;
+            background: white;
+            transition: border-color 0.2s;
+        }
+
+        .control-input:focus {
+            outline: none;
+            border-color: #0a0a0a;
+            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .control-range {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #f3f4f6;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .control-range::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #0a0a0a;
+            cursor: pointer;
+        }
+
+        .control-range::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #0a0a0a;
+            cursor: pointer;
+            border: none;
+        }
+
+        .range-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .range-value {
+            font-size: 14px;
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        .color-input {
+            width: 48px;
+            height: 48px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: none;
+        }
+
+        .caption-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: #f9fafb;
+        }
+
+        .caption-item {
+            padding: 16px;
+            border-bottom: 1px solid #e5e7eb;
+            transition: background-color 0.2s;
+        }
+
+        .caption-item:hover {
+            background: #f3f4f6;
+        }
+
+        .caption-item:last-child {
+            border-bottom: none;
+        }
+
+        .caption-text {
+            width: 100%;
+            border: none;
+            background: transparent;
+            font-size: 14px;
+            resize: none;
+            font-family: inherit;
+            color: #374151;
+        }
+
+        .caption-text:focus {
+            outline: none;
+        }
+
+        .caption-timing {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-bottom: 8px;
+        }
+
+        /* Download Section */
+        .download-section {
+            display: none;
+            text-align: center;
+            margin-top: 40px;
+            gap: 16px;
         }
 
         .hidden {
             display: none !important;
         }
 
-        .error-message {
-            background: #ff6b6b;
-            color: white;
-            padding: 15px;
-            border-radius: 10px;
-            margin: 15px 0;
-            display: none;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-
-        .processing {
-            animation: pulse 2s infinite;
-        }
-
-        @media (max-width: 480px) {
-            .container {
-                margin: 10px;
-                max-width: none;
+        @media (max-width: 1024px) {
+            .editor-section {
+                flex-direction: column;
+                align-items: center;
             }
-            
+
+            .video-container {
+                width: 280px;
+                height: 497px;
+            }
+        }
+
+        @media (max-width: 768px) {
             .content {
-                padding: 20px;
+                padding: 20px 16px;
+            }
+
+            .upload-title {
+                font-size: 28px;
+            }
+
+            .controls-panel {
+                padding: 24px;
+            }
+
+            .video-container {
+                width: 250px;
+                height: 444px;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="main-container">
+        <!-- Header -->
         <div class="header">
-            <h1>🎬 AI Video Captions</h1>
-            <p>Add automatic captions to your videos</p>
+            <div class="header-content">
+                <div class="logo">
+                    🎬 AI Captions
+                </div>
+                <a href="/thumbnail-creator" class="nav-link">
+                    🖼️ Thumbnail Creator
+                </a>
+            </div>
         </div>
-        
+
+        <!-- Main Content -->
         <div class="content">
             <!-- Upload Section -->
-            <div id="uploadSection">
+            <div id="uploadSection" class="upload-section">
+                <h1 class="upload-title">Create Captioned Videos</h1>
+                <p class="upload-subtitle">Upload your video and we'll automatically generate captions that you can edit and customize</p>
+                
                 <div class="upload-area" id="uploadArea">
                     <div class="upload-icon">📱</div>
-                    <div class="upload-text">Drag & drop your video here</div>
-                    <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
-                        Choose Video
+                    <div class="upload-text">Drag and drop your video here</div>
+                    <div class="upload-subtext">Supports MP4, MOV, AVI files up to 100MB</div>
+                    <button class="btn-primary" onclick="document.getElementById('fileInput').click()">
+                        Choose Video File
                     </button>
                     <input type="file" id="fileInput" class="file-input" accept="video/*">
                 </div>
-                
-                <div class="settings">
-                    <div class="setting-group">
-                        <label for="fontSize">Font Size</label>
-                        <input type="number" id="fontSize" value="24" min="16" max="48">
-                    </div>
-                    <div class="setting-group">
-                        <label for="fontColor">Font Color</label>
-                        <select id="fontColor">
-                            <option value="white">White</option>
-                            <option value="black">Black</option>
-                            <option value="yellow">Yellow</option>
-                            <option value="red">Red</option>
-                            <option value="blue">Blue</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <button class="upload-btn" id="processBtn" style="width: 100%; display: none;">
-                    🚀 Process Video
-                </button>
             </div>
-            
+
             <!-- Progress Section -->
-            <div class="progress-container" id="progressSection">
+            <div id="progressSection" class="progress-section">
+                <h2 class="progress-title">Generating Captions...</h2>
                 <div class="progress-bar">
-                    <div class="progress-fill" id="progressFill">0%</div>
+                    <div class="progress-fill" id="progressFill"></div>
                 </div>
                 <div class="progress-text" id="progressText">Processing your video...</div>
             </div>
-            
-            <!-- Video Player Section -->
-            <div class="video-player" id="videoPlayer">
-                <video id="processedVideo" controls></video>
+
+            <!-- Editor Section -->
+            <div id="editorSection" class="editor-section">
+                <!-- Video Preview -->
+                <div class="video-preview">
+                    <div class="video-container">
+                        <video id="videoPlayer" class="video-player" controls></video>
+                    </div>
+                    <div class="download-section" id="downloadSection">
+                        <button class="btn-primary" id="downloadBtn">
+                            ⬇️ Download Video
+                        </button>
+                        <button class="btn-secondary" id="resetBtn">
+                            🔄 New Video
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls Panel -->
+                <div class="controls-panel">
+                    <h3 style="margin-bottom: 24px; font-size: 20px; font-weight: 600;">Edit Captions</h3>
+                    
+                    <!-- Style Controls -->
+                    <div class="control-group">
+                        <div class="range-label">
+                            <label class="control-label">Font Size</label>
+                            <span class="range-value" id="fontSizeValue">24px</span>
+                        </div>
+                        <input type="range" id="fontSize" class="control-range" min="16" max="48" value="24">
+                    </div>
+
+                    <div class="control-group">
+                        <div class="range-label">
+                            <label class="control-label">Text Position</label>
+                            <span class="range-value" id="textHeightValue">75%</span>
+                        </div>
+                        <input type="range" id="textHeight" class="control-range" min="50" max="90" value="75" step="5">
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label">Text Color</label>
+                        <div style="display: flex; gap: 12px; align-items: center;">
+                            <input type="color" id="textColor" class="color-input" value="#ffffff">
+                            <select id="fontColor" class="control-input" style="width: auto;">
+                                <option value="white">White</option>
+                                <option value="black">Black</option>
+                                <option value="yellow">Yellow</option>
+                                <option value="red">Red</option>
+                                <option value="blue">Blue</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Caption Text Editor -->
+                    <div class="control-group">
+                        <label class="control-label">Caption Text</label>
+                        <div class="caption-list" id="captionsList">
+                            <!-- Captions will be populated here -->
+                        </div>
+                    </div>
+
+                    <button class="btn-primary" id="applyChangesBtn" style="width: 100%;">
+                        Apply Changes
+                    </button>
+                </div>
             </div>
-            
-            <!-- Download Section -->
-            <div id="downloadSection" style="display: none;">
-                <button class="download-btn" id="downloadBtn">
-                    ⬇️ Download Video
-                </button>
-                <button class="reset-btn" id="resetBtn">
-                    🔄 Process Another Video
-                </button>
-            </div>
-            
-            <!-- Error Message -->
-            <div class="error-message" id="errorMessage"></div>
         </div>
     </div>
 
     <script>
         let selectedFile = null;
         let processedVideoUrl = null;
+        let captions = [];
+        let videoId = null;
+        let isProcessing = false;
 
         // DOM Elements
-        const uploadArea = document.getElementById('uploadArea');
-        const fileInput = document.getElementById('fileInput');
-        const processBtn = document.getElementById('processBtn');
         const uploadSection = document.getElementById('uploadSection');
         const progressSection = document.getElementById('progressSection');
+        const editorSection = document.getElementById('editorSection');
+        const downloadSection = document.getElementById('downloadSection');
+        
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
         const progressFill = document.getElementById('progressFill');
         const progressText = document.getElementById('progressText');
         const videoPlayer = document.getElementById('videoPlayer');
-        const processedVideo = document.getElementById('processedVideo');
-        const downloadSection = document.getElementById('downloadSection');
+        const captionsList = document.getElementById('captionsList');
+        
+        const fontSize = document.getElementById('fontSize');
+        const fontSizeValue = document.getElementById('fontSizeValue');
+        const textHeight = document.getElementById('textHeight');
+        const textHeightValue = document.getElementById('textHeightValue');
+        const textColor = document.getElementById('textColor');
+        const fontColor = document.getElementById('fontColor');
+        
         const downloadBtn = document.getElementById('downloadBtn');
         const resetBtn = document.getElementById('resetBtn');
-        const errorMessage = document.getElementById('errorMessage');
-        const fontSize = document.getElementById('fontSize');
-        const fontColor = document.getElementById('fontColor');
+        const applyChangesBtn = document.getElementById('applyChangesBtn');
 
-        // Drag and drop functionality
-        uploadArea.addEventListener('dragover', (e) => {
+        // Initialize
+        function init() {
+            setupEventListeners();
+            updateRangeValues();
+        }
+
+        function setupEventListeners() {
+            // Upload functionality
+            uploadArea.addEventListener('dragover', handleDragOver);
+            uploadArea.addEventListener('dragleave', handleDragLeave);
+            uploadArea.addEventListener('drop', handleDrop);
+            fileInput.addEventListener('change', handleFileSelect);
+            
+            // Range input updates
+            fontSize.addEventListener('input', updateRangeValues);
+            textHeight.addEventListener('input', updateRangeValues);
+            
+            // Buttons
+            applyChangesBtn.addEventListener('click', applyChanges);
+            downloadBtn.addEventListener('click', downloadVideo);
+            resetBtn.addEventListener('click', resetToUpload);
+        }
+
+        // File handling
+        function handleDragOver(e) {
             e.preventDefault();
             uploadArea.classList.add('dragover');
-        });
+        }
 
-        uploadArea.addEventListener('dragleave', () => {
+        function handleDragLeave() {
             uploadArea.classList.remove('dragover');
-        });
+        }
 
-        uploadArea.addEventListener('drop', (e) => {
+        function handleDrop(e) {
             e.preventDefault();
             uploadArea.classList.remove('dragover');
             const files = e.dataTransfer.files;
             if (files.length > 0) {
-                handleFileSelect(files[0]);
+                processFile(files[0]);
             }
-        });
+        }
 
-        // File input change
-        fileInput.addEventListener('change', (e) => {
+        function handleFileSelect(e) {
             if (e.target.files.length > 0) {
-                handleFileSelect(e.target.files[0]);
+                processFile(e.target.files[0]);
             }
-        });
+        }
 
-        // Handle file selection
-        function handleFileSelect(file) {
+        async function processFile(file) {
             if (!file.type.startsWith('video/')) {
-                showError('Please select a valid video file');
+                alert('Please select a valid video file');
                 return;
             }
 
-            if (file.size > 100 * 1024 * 1024) { // 100MB limit
-                showError('File size should be less than 100MB');
+            if (file.size > 100 * 1024 * 1024) {
+                alert('File size should be less than 100MB');
                 return;
             }
 
             selectedFile = file;
-            document.querySelector('.upload-text').textContent = `Selected: ${file.name}`;
-            processBtn.style.display = 'block';
-            hideError();
+            showProgress();
+            
+            try {
+                await generateCaptions();
+            } catch (error) {
+                console.error('Error processing video:', error);
+                alert('Failed to process video. Please try again.');
+                resetToUpload();
+            }
         }
 
-        // Process video
-        processBtn.addEventListener('click', async () => {
-            if (!selectedFile) {
-                showError('Please select a video file first');
-                return;
-            }
-
+        function showProgress() {
             uploadSection.style.display = 'none';
             progressSection.style.display = 'block';
             
-            try {
-                const formData = new FormData();
-                formData.append('file', selectedFile);
-                formData.append('font_size', fontSize.value);
-                formData.append('font_color', fontColor.value);
+            // Simulate progress
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress > 95) progress = 95;
+                updateProgress(progress);
+            }, 500);
+            
+            // Clear interval after generating captions
+            setTimeout(() => clearInterval(interval), 3000);
+        }
 
-                // Simulate progress updates
-                let progress = 0;
-                const progressInterval = setInterval(() => {
-                    progress += Math.random() * 15;
-                    if (progress > 95) progress = 95;
-                    updateProgress(progress, 'Processing video...');
-                }, 1000);
+        function updateProgress(percent) {
+            progressFill.style.width = `${percent}%`;
+            if (percent < 30) {
+                progressText.textContent = 'Analyzing video...';
+            } else if (percent < 70) {
+                progressText.textContent = 'Generating captions...';
+            } else {
+                progressText.textContent = 'Almost done...';
+            }
+        }
 
-                const response = await fetch('/upload/', {
-                    method: 'POST',
-                    body: formData
+        async function generateCaptions() {
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            formData.append('font_size', fontSize.value);
+            formData.append('font_color', fontColor.value);
+            formData.append('text_height', textHeight.value);
+
+            const response = await fetch('/upload/', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error(`Server error: ${response.status}`);
+            }
+
+            updateProgress(100);
+            progressText.textContent = 'Complete!';
+            
+            // Get the response data
+            const responseData = await response.json();
+            videoId = responseData.video_id;
+            captions = responseData.captions;
+            
+            // Get the processed video
+            const videoResponse = await fetch(responseData.video_url);
+            const videoBlob = await videoResponse.blob();
+            processedVideoUrl = URL.createObjectURL(videoBlob);
+            
+            setTimeout(() => {
+                showEditor();
+            }, 500);
+        }
+
+        function showEditor() {
+            progressSection.style.display = 'none';
+            editorSection.style.display = 'flex';
+            downloadSection.style.display = 'flex';
+            
+            videoPlayer.src = processedVideoUrl;
+            videoPlayer.load();
+            
+            // Render the captions received from backend
+            renderCaptions();
+        }
+
+        function renderCaptions() {
+            captionsList.innerHTML = '';
+            
+            captions.forEach((caption, index) => {
+                const item = document.createElement('div');
+                item.className = 'caption-item';
+                item.innerHTML = `
+                    <div class="caption-timing">${formatTime(caption.start)} - ${formatTime(caption.end)}</div>
+                    <textarea class="caption-text" data-index="${index}" rows="2">${caption.text}</textarea>
+                `;
+                captionsList.appendChild(item);
+            });
+            
+            // Add event listeners for text changes
+            document.querySelectorAll('.caption-text').forEach(textarea => {
+                textarea.addEventListener('input', (e) => {
+                    const index = parseInt(e.target.dataset.index);
+                    captions[index].text = e.target.value;
+                    console.log(`Updated caption ${index}:`, captions[index]);
                 });
+            });
+        }
 
-                clearInterval(progressInterval);
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
 
+        function updateRangeValues() {
+            fontSizeValue.textContent = `${fontSize.value}px`;
+            textHeightValue.textContent = `${textHeight.value}%`;
+        }
+
+        async function applyChanges() {
+            if (!videoId) {
+                alert('No video to edit');
+                return;
+            }
+            
+            applyChangesBtn.textContent = 'Applying...';
+            applyChangesBtn.disabled = true;
+            
+            try {
+                const editRequest = {
+                    video_id: videoId,
+                    captions: captions,
+                    font_size: parseInt(fontSize.value),
+                    font_color: fontColor.value,
+                    text_height: parseInt(textHeight.value)
+                };
+                
+                const response = await fetch('/edit-captions/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(editRequest)
+                });
+                
                 if (!response.ok) {
                     throw new Error(`Server error: ${response.status}`);
                 }
-
-                updateProgress(100, 'Complete!');
                 
-                // Create blob URL for the processed video
-                const videoBlob = await response.blob();
-                processedVideoUrl = URL.createObjectURL(videoBlob);
+                const result = await response.json();
                 
+                // Update video with edited version
+                if (processedVideoUrl) {
+                    URL.revokeObjectURL(processedVideoUrl);
+                }
+                
+                const newVideoResponse = await fetch(result.video_url);
+                const newVideoBlob = await newVideoResponse.blob();
+                processedVideoUrl = URL.createObjectURL(newVideoBlob);
+                
+                videoPlayer.src = processedVideoUrl;
+                videoPlayer.load();
+                
+                applyChangesBtn.textContent = 'Apply Changes';
+                applyChangesBtn.disabled = false;
+                
+                // Show success message
+                const originalText = applyChangesBtn.textContent;
+                applyChangesBtn.textContent = '✅ Applied!';
                 setTimeout(() => {
-                    showProcessedVideo();
-                }, 500);
-
+                    applyChangesBtn.textContent = originalText;
+                }, 2000);
+                
             } catch (error) {
-                console.error('Error:', error);
-                showError('Failed to process video. Please try again.');
-                resetToUpload();
-            }
-        });
-
-        // Update progress
-        function updateProgress(percent, text) {
-            progressFill.style.width = `${percent}%`;
-            progressFill.textContent = `${Math.round(percent)}%`;
-            progressText.textContent = text;
-            
-            if (percent >= 100) {
-                progressSection.classList.add('processing');
+                console.error('Error applying changes:', error);
+                alert('Failed to apply changes. Please try again.');
+                applyChangesBtn.textContent = 'Apply Changes';
+                applyChangesBtn.disabled = false;
             }
         }
 
-        // Show processed video
-        function showProcessedVideo() {
-            progressSection.style.display = 'none';
-            videoPlayer.style.display = 'block';
-            downloadSection.style.display = 'block';
-            
-            processedVideo.src = processedVideoUrl;
-            processedVideo.load();
-        }
-
-        // Download video
-        downloadBtn.addEventListener('click', () => {
+        function downloadVideo() {
             if (processedVideoUrl) {
                 const a = document.createElement('a');
                 a.href = processedVideoUrl;
@@ -459,39 +807,30 @@
                 a.click();
                 document.body.removeChild(a);
             }
-        });
-
-        // Reset to upload
-        resetBtn.addEventListener('click', resetToUpload);
+        }
 
         function resetToUpload() {
             selectedFile = null;
             processedVideoUrl = null;
+            captions = [];
+            videoId = null;
             
             uploadSection.style.display = 'block';
             progressSection.style.display = 'none';
-            videoPlayer.style.display = 'none';
+            editorSection.style.display = 'none';
             downloadSection.style.display = 'none';
-            processBtn.style.display = 'none';
             
-            progressSection.classList.remove('processing');
-            document.querySelector('.upload-text').textContent = 'Drag & drop your video here';
             fileInput.value = '';
             
-            hideError();
+            if (processedVideoUrl) {
+                URL.revokeObjectURL(processedVideoUrl);
+            }
         }
 
-        // Error handling
-        function showError(message) {
-            errorMessage.textContent = message;
-            errorMessage.style.display = 'block';
-        }
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', init);
 
-        function hideError() {
-            errorMessage.style.display = 'none';
-        }
-
-        // Clean up blob URLs when page unloads
+        // Cleanup
         window.addEventListener('beforeunload', () => {
             if (processedVideoUrl) {
                 URL.revokeObjectURL(processedVideoUrl);

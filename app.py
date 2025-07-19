@@ -1,9 +1,12 @@
 import os
 import uuid
-from fastapi import FastAPI, UploadFile, Form
-from fastapi.responses import FileResponse
+import json
+from fastapi import FastAPI, UploadFile, Form, HTTPException
+from fastapi.responses import FileResponse, JSONResponse
 from moviepy import VideoFileClip, TextClip, CompositeVideoClip
 from faster_whisper import WhisperModel
+from pydantic import BaseModel
+from typing import List
 
 app = FastAPI()
 
@@ -16,12 +19,81 @@ os.makedirs(PROCESSED_DIR, exist_ok=True)
 # Load model once at startup
 model = WhisperModel("base", compute_type="int8")  # Use "float16" if GPU available
 
+# Pydantic models for API
+class Caption(BaseModel):
+    start: float
+    end: float
+    text: str
+
+class EditRequest(BaseModel):
+    video_id: str
+    captions: List[Caption]
+    font_size: int = 24
+    font_color: str = "white"
+    text_height: int = 75
+
+def split_text_into_chunks(text: str, start_time: float, end_time: float, font_size: int):
+    """Split text into chunks that fit in maximum 2 lines"""
+    words = text.split()
+    if not words:
+        return []
+    
+    # Estimate characters per line based on font size (rough calculation)
+    chars_per_line = max(30, 120 - font_size)  # Smaller font = more chars per line
+    max_chars_per_chunk = chars_per_line * 2  # 2 lines max
+    
+    chunks = []
+    current_chunk = []
+    current_length = 0
+    
+    for word in words:
+        # Check if adding this word would exceed 2 lines
+        test_length = current_length + len(word) + (1 if current_chunk else 0)  # +1 for space
+        
+        if test_length > max_chars_per_chunk and current_chunk:
+            # Save current chunk and start new one
+            chunks.append(" ".join(current_chunk))
+            current_chunk = [word]
+            current_length = len(word)
+        else:
+            current_chunk.append(word)
+            current_length = test_length
+    
+    # Add final chunk
+    if current_chunk:
+        chunks.append(" ".join(current_chunk))
+    
+    # Create caption objects with timing
+    if not chunks:
+        return []
+    
+    duration = end_time - start_time
+    chunk_duration = duration / len(chunks)
+    
+    result = []
+    for i, chunk_text in enumerate(chunks):
+        chunk_start = start_time + (i * chunk_duration)
+        chunk_end = start_time + ((i + 1) * chunk_duration)
+        
+        result.append({
+            "start": chunk_start,
+            "end": chunk_end,
+            "text": chunk_text
+        })
+    
+    return result
+
 @app.get("/")
 async def index():
     return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
 
+@app.get("/thumbnail-creator")
+async def thumbnail_creator():
+    return FileResponse(os.path.join(FRONTEND_DIR, "thumbnail-creator.html"))
+
 @app.post("/upload/")
-async def upload_video(file: UploadFile, font_size: int = Form(24), font_color: str = Form("white")):
+async def upload_video(file: UploadFile, font_size: int = Form(24), font_color: str = Form("white"), text_height: int = Form(75)):
+    print(f"Received file: {file.filename}, font_size: {font_size}, font_color: {font_color}, text_height: {text_height}")
     # Save uploaded video
     video_id = str(uuid.uuid4())
     input_path = os.path.join(UPLOAD_DIR, f"{video_id}.mp4")
@@ -32,144 +104,24 @@ async def upload_video(file: UploadFile, font_size: int = Form(24), font_color: 
 
     # Transcribe using Faster-Whisper with word-level timestamps
     segments, _ = model.transcribe(input_path, word_timestamps=True)
-
-    # Load original video
-    clip = VideoFileClip(input_path)
-    subtitles = []
-
+    
+    # Extract captions for frontend editing - split into 2-line segments
+    captions_data = []
     for segment in segments:
-        # Text processing for 2-line display with word-level timing
-        width, height = clip.size
-        max_width = int(width * 0.8)  # Max width for each line
-        
-        # Get words with their timestamps
-        words_with_timing = []
-        if hasattr(segment, 'words') and segment.words:
-            for word_info in segment.words:
-                words_with_timing.append({
-                    'word': word_info.word.strip(),
-                    'start': word_info.start,
-                    'end': word_info.end
-                })
-        else:
-            # Fallback: split words evenly across segment duration
-            words = segment.text.split()
-            word_duration = (segment.end - segment.start) / len(words)
-            for i, word in enumerate(words):
-                words_with_timing.append({
-                    'word': word,
-                    'start': segment.start + (i * word_duration),
-                    'end': segment.start + ((i + 1) * word_duration)
-                })
-        
-        # Create chunks that fit in 2 lines with proper timing
-        chunks = []
-        current_chunk_words = []
-        current_chunk_start = None
-        
-        for word_info in words_with_timing:
-            test_chunk_words = current_chunk_words + [word_info]
-            
-            # Check if this chunk fits in 2 lines
-            test_text = " ".join([w['word'] for w in test_chunk_words])
-            test_words = test_text.split()
-            
-            # Try to fit in 2 lines
-            lines = []
-            current_line = []
-            
-            for test_word in test_words:
-                test_line = current_line + [test_word]
-                estimated_width = len(" ".join(test_line)) * font_size * 0.6
-                
-                if estimated_width > max_width and current_line:
-                    lines.append(" ".join(current_line))
-                    current_line = [test_word]
-                else:
-                    current_line = test_line
-            
-            if current_line:
-                lines.append(" ".join(current_line))
-            
-            # If it fits in 2 lines or less, add to current chunk
-            if len(lines) <= 2:
-                if current_chunk_start is None:
-                    current_chunk_start = word_info['start']
-                current_chunk_words = test_chunk_words
-            else:
-                # Save current chunk and start new one
-                if current_chunk_words:
-                    chunk_end = current_chunk_words[-1]['end']
-                    chunks.append({
-                        'words': current_chunk_words,
-                        'start': current_chunk_start,
-                        'end': chunk_end
-                    })
-                
-                current_chunk_words = [word_info]
-                current_chunk_start = word_info['start']
-        
-        # Add final chunk
-        if current_chunk_words:
-            chunk_end = current_chunk_words[-1]['end']
-            chunks.append({
-                'words': current_chunk_words,
-                'start': current_chunk_start,
-                'end': chunk_end
-            })
-        
-        # Create text clips for each chunk with exact timing
-        for chunk in chunks:
-            chunk_text = " ".join([w['word'] for w in chunk['words']])
-            
-            # Split chunk into 2 lines
-            chunk_words = chunk_text.split()
-            lines = []
-            current_line = []
-            
-            for word in chunk_words:
-                test_line = current_line + [word]
-                estimated_width = len(" ".join(test_line)) * font_size * 0.6
-                
-                if estimated_width > max_width and current_line:
-                    lines.append(" ".join(current_line))
-                    current_line = [word]
-                else:
-                    current_line = test_line
-            
-            if current_line:
-                lines.append(" ".join(current_line))
-            
-            # Join lines with newline (max 2 lines)
-            final_text = "\n".join(lines[:2])
-            
-            txt_clip = TextClip(
-                text=final_text, 
-                font_size=font_size, 
-                color=font_color, 
-                size=(max_width, height // 5),  # Height for 2 lines
-                method="caption",
-                text_align="center",
-                stroke_color="black",
-                stroke_width=2
-            )
-            
-            # Use exact word timing
-            txt_clip = (
-                txt_clip
-                .with_start(chunk['start'])
-                .with_end(chunk['end'])
-                .with_position("center")
-            )
-            subtitles.append(txt_clip)
+        # Split long segments into 2-line chunks
+        segment_chunks = split_text_into_chunks(segment.text, segment.start, segment.end, font_size)
+        captions_data.extend(segment_chunks)
+    
+    # Save captions data for later editing
+    captions_path = os.path.join(PROCESSED_DIR, f"{video_id}_captions.json")
+    with open(captions_path, "w") as f:
+        json.dump(captions_data, f)
 
-    # Create final video with subtitles (preserve audio)
-    final_clip = CompositeVideoClip([clip, *subtitles])
+    # Generate video with captions
+    processed_video = generate_captioned_video(input_path, captions_data, font_size, font_color, text_height)
     
-    # Ensure audio is preserved from original clip
-    final_clip = final_clip.with_audio(clip.audio)
-    
-    final_clip.write_videofile(
+    # Save processed video
+    processed_video.write_videofile(
         output_path, 
         codec="libx264", 
         audio_codec="aac",
@@ -178,7 +130,131 @@ async def upload_video(file: UploadFile, font_size: int = Form(24), font_color: 
     )
     
     # Clean up
-    clip.close()
-    final_clip.close()
+    processed_video.close()
 
-    return FileResponse(output_path, media_type="video/mp4", filename="captioned_video.mp4")
+    return JSONResponse({
+        "video_id": video_id,
+        "captions": captions_data,
+        "video_url": f"/download/{video_id}_captioned.mp4"
+    })
+
+def generate_captioned_video(input_path: str, captions_data: list, font_size: int, font_color: str, text_height: int):
+    # Load original video
+    clip = VideoFileClip(input_path)
+    clip = clip.with_volume_scaled(3) # Increase volume by 50%
+    subtitles = []
+    
+    # Get video dimensions
+    width, height = clip.size
+
+    for caption in captions_data:
+        # Get caption text - use EXACTLY what user provided
+        caption_text = caption.get('text', '')
+        
+        # Skip only if completely empty
+        if not caption_text:
+            continue
+        
+        # Create text clip with user's exact text
+        try:
+            max_width = int(width * 0.8)  # 80% of video width
+            txt_clip = TextClip(
+                text=caption_text, 
+                font_size=font_size, 
+                color=font_color, 
+                size=(max_width, None),  # Required for method="caption"
+                method="caption",
+                text_align="center",
+                stroke_color="black",
+                stroke_width=2
+            )
+            
+            # Position and timing
+            constrained_height = max(50, min(90, text_height))
+            y_position = height * (constrained_height / 100)
+            
+            txt_clip = (
+                txt_clip
+                .with_start(caption['start'])
+                .with_end(caption['end'])
+                .with_position(("center", y_position))
+            )
+            subtitles.append(txt_clip)
+            
+        except Exception as e:
+            print(f"Error creating caption: {e}")
+            continue
+
+    # Create final video with subtitles (preserve audio)
+    final_clip = CompositeVideoClip([clip, *subtitles])
+    final_clip = final_clip.with_audio(clip.audio)
+    
+    return final_clip
+
+@app.post("/edit-captions/")
+async def edit_captions(edit_request: EditRequest):
+    """Re-process video with edited captions"""
+    try:
+        print(f"Edit request received for video_id: {edit_request.video_id}")
+        print(f"Number of captions: {len(edit_request.captions)}")
+        print(f"Font settings: size={edit_request.font_size}, color={edit_request.font_color}, height={edit_request.text_height}")
+        
+        # Get original video path
+        input_path = os.path.join(UPLOAD_DIR, f"{edit_request.video_id}.mp4")
+        output_path = os.path.join(PROCESSED_DIR, f"{edit_request.video_id}_edited.mp4")
+        
+        if not os.path.exists(input_path):
+            raise HTTPException(status_code=404, detail="Original video not found")
+        
+        # Convert captions to dict format
+        captions_data = [
+            {
+                "start": caption.start,
+                "end": caption.end,
+                "text": caption.text
+            }
+            for caption in edit_request.captions
+        ]
+        
+        # Debug: Print caption data
+        for i, cap in enumerate(captions_data):
+            print(f"Caption {i}: '{cap['text']}' ({cap['start']}-{cap['end']})")
+        
+        # Generate new video with edited captions
+        processed_video = generate_captioned_video(
+            input_path, 
+            captions_data, 
+            edit_request.font_size, 
+            edit_request.font_color, 
+            edit_request.text_height
+        )
+        
+        # Save processed video
+        processed_video.write_videofile(
+            output_path, 
+            codec="libx264", 
+            audio_codec="aac",
+            temp_audiofile="temp-audio.m4a",
+            remove_temp=True
+        )
+        
+        # Clean up
+        processed_video.close()
+        
+        return JSONResponse({
+            "success": True,
+            "video_url": f"/download/{edit_request.video_id}_edited.mp4"
+        })
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/download/{filename}")
+async def download_file(filename: str):
+    """Download processed video files"""
+    file_path = os.path.join(PROCESSED_DIR, filename)
+    
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    return FileResponse(file_path, media_type="video/mp4", filename=filename)
