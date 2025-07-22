@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aspect Ratio Converter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            background: #fafafa;
+            color: #0a0a0a;
+            line-height: 1.5;
+        }
+
+        .main-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 20px;
+            font-weight: 600;
+            color: #0a0a0a;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 12px;
+        }
+
+        .nav-link {
+            background: #0a0a0a;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: background-color 0.2s;
+        }
+
+        .nav-link:hover {
+            background: #1a1a1a;
+        }
+
+        .nav-link.secondary {
+            background: white;
+            color: #0a0a0a;
+            border: 1px solid #d1d5db;
+        }
+
+        .nav-link.secondary:hover {
+            background: #f9fafb;
+        }
+
+        .content {
+            flex: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            width: 100%;
+        }
+
+        .upload-section {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .upload-title {
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #0a0a0a;
+        }
+
+        .upload-subtitle {
+            font-size: 16px;
+            color: #6b7280;
+            margin-bottom: 32px;
+        }
+
+        .upload-area {
+            border: 2px dashed #d1d5db;
+            border-radius: 12px;
+            padding: 48px 24px;
+            margin-bottom: 24px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            background: white;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .upload-area:hover {
+            border-color: #6b7280;
+            background: #f9fafb;
+        }
+
+        .upload-area.dragover {
+            border-color: #0a0a0a;
+            background: #f3f4f6;
+        }
+
+        .upload-area.has-file {
+            border-color: #10b981;
+            background: #f0fdf4;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            color: #9ca3af;
+            margin-bottom: 16px;
+        }
+
+        .upload-text {
+            color: #374151;
+            font-size: 16px;
+            margin-bottom: 16px;
+            font-weight: 500;
+        }
+
+        .upload-subtext {
+            color: #6b7280;
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+
+        .file-name {
+            color: #10b981;
+            font-weight: 600;
+            font-size: 14px;
+            margin-top: 8px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .aspect-ratio-section {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 32px;
+            border: 1px solid #e5e7eb;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .aspect-ratio-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #0a0a0a;
+        }
+
+        .ratio-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .ratio-option {
+            background: #f9fafb;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .ratio-option:hover {
+            border-color: #9ca3af;
+            background: #f3f4f6;
+        }
+
+        .ratio-option.selected {
+            border-color: #0a0a0a;
+            background: #f8fafc;
+        }
+
+        .ratio-name {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+
+        .ratio-desc {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .ratio-visual {
+            width: 40px;
+            height: 30px;
+            background: #d1d5db;
+            border-radius: 4px;
+            margin: 8px auto;
+            position: relative;
+        }
+
+        /* Visual representations of aspect ratios */
+        .ratio-16-9 { width: 40px; height: 23px; }
+        .ratio-9-16 { width: 23px; height: 40px; }
+        .ratio-4-3 { width: 40px; height: 30px; }
+        .ratio-3-4 { width: 30px; height: 40px; }
+        .ratio-1-1 { width: 32px; height: 32px; }
+        .ratio-21-9 { width: 40px; height: 17px; }
+        .ratio-2-1 { width: 40px; height: 20px; }
+        .ratio-16-10 { width: 40px; height: 25px; }
+        .ratio-5-4 { width: 40px; height: 32px; }
+
+        .btn-primary {
+            background: #0a0a0a;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary:hover {
+            background: #1a1a1a;
+        }
+
+        .btn-primary:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #0a0a0a;
+            border: 1px solid #d1d5db;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-secondary:hover {
+            background: #f9fafb;
+            border-color: #9ca3af;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            margin-top: 32px;
+        }
+
+        .progress-section {
+            display: none;
+            text-align: center;
+            margin: 40px 0;
+        }
+
+        .progress-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #0a0a0a;
+        }
+
+        .progress-bar {
+            background: #f3f4f6;
+            border-radius: 8px;
+            overflow: hidden;
+            height: 8px;
+            margin: 24px 0;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .progress-fill {
+            background: #0a0a0a;
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .result-section {
+            display: none;
+            text-align: center;
+            margin-top: 40px;
+        }
+
+        .video-preview {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid #e5e7eb;
+            margin-bottom: 24px;
+        }
+
+        .video-container {
+            position: relative;
+            max-width: 800px;
+            margin: 0 auto;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .video-player {
+            width: 100%;
+            height: auto;
+        }
+
+        .result-info {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 768px) {
+            .ratio-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .upload-area {
+                padding: 32px 16px;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .aspect-ratio-section {
+                padding: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-content">
+                <div class="logo">
+                    📐 Aspect Ratio Converter
+                </div>
+                <div class="nav-links">
+                    <a href="/" class="nav-link secondary">🎯 AI Captions</a>
+                    <a href="/video-concatenate" class="nav-link secondary">📱 Video Concatenate</a>
+                    <a href="/thumbnail-creator" class="nav-link secondary">🖼️ Thumbnail Creator</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content">
+            <!-- Upload Section -->
+            <div id="uploadSection" class="upload-section">
+                <h1 class="upload-title">Convert Video Aspect Ratio</h1>
+                <p class="upload-subtitle">Upload your video and choose the desired aspect ratio for social media platforms</p>
+                
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">🎬</div>
+                    <div class="upload-text">Drag and drop your video here</div>
+                    <div class="upload-subtext">Supports MP4, MOV, AVI files up to 200MB</div>
+                    <button class="btn-primary" onclick="document.getElementById('fileInput').click()">
+                        Choose Video File
+                    </button>
+                    <div class="file-name" id="fileName"></div>
+                    <input type="file" id="fileInput" class="file-input" accept="video/*">
+                </div>
+
+                <!-- Aspect Ratio Selection -->
+                <div class="aspect-ratio-section">
+                    <h3 class="aspect-ratio-title">Select Target Aspect Ratio</h3>
+                    <div class="ratio-grid">
+                        <div class="ratio-option" data-ratio="16:9">
+                            <div class="ratio-visual ratio-16-9"></div>
+                            <div class="ratio-name">16:9</div>
+                            <div class="ratio-desc">YouTube, TV</div>
+                        </div>
+                        <div class="ratio-option" data-ratio="9:16">
+                            <div class="ratio-visual ratio-9-16"></div>
+                            <div class="ratio-name">9:16</div>
+                            <div class="ratio-desc">TikTok, Reels</div>
+                        </div>
+                        <div class="ratio-option" data-ratio="4:3">
+                            <div class="ratio-visual ratio-4-3"></div>
+                            <div class="ratio-name">4:3</div>
+                            <div class="ratio-desc">Classic TV</div>
+                        </div>
+                        <div class="ratio-option" data-ratio="3:4">
+                            <div class="ratio-visual ratio-3-4"></div>
+                            <div class="ratio-name">3:4</div>
+                            <div class="ratio-desc">Portrait</div>
+                        </div>
+                        <div class="ratio-option" data-ratio="1:1">
+                            <div class="ratio-visual ratio-1-1"></div>
+                            <div class="ratio-name">1:1</div>
+                            <div class="ratio-desc">Instagram</div>
+                        </div>
+                        <div class="ratio-option" data-ratio="21:9">
+                            <div class="ratio-visual ratio-21-9"></div>
+                            <div class="ratio-name">21:9</div>
+                            <div class="ratio-desc">Ultra-wide</div>
+                        </div>
+                        <div class="ratio-option" data-ratio="2:1">
+                            <div class="ratio-visual ratio-2-1"></div>
+                            <div class="ratio-name">2:1</div>
+                            <div class="ratio-desc">Cinema</div>
+                        </div>
+                        <div class="ratio-option" data-ratio="16:10">
+                            <div class="ratio-visual ratio-16-10"></div>
+                            <div class="ratio-name">16:10</div>
+                            <div class="ratio-desc">Widescreen</div>
+                        </div>
+                        <div class="ratio-option" data-ratio="5:4">
+                            <div class="ratio-visual ratio-5-4"></div>
+                            <div class="ratio-name">5:4</div>
+                            <div class="ratio-desc">Monitor</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn-primary" id="convertBtn" disabled>
+                        📐 Convert Aspect Ratio
+                    </button>
+                    <button class="btn-secondary" id="resetBtn">
+                        🔄 Reset
+                    </button>
+                </div>
+            </div>
+
+            <!-- Progress Section -->
+            <div id="progressSection" class="progress-section">
+                <h2 class="progress-title">Converting Video...</h2>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text" id="progressText">Analyzing video...</div>
+            </div>
+
+            <!-- Result Section -->
+            <div id="resultSection" class="result-section">
+                <h2 style="margin-bottom: 24px; font-size: 24px; font-weight: 600;">Conversion Complete</h2>
+                
+                <div class="result-info" id="resultInfo">
+                    <div style="font-weight: 600; margin-bottom: 8px;">✅ Successfully converted to <span id="resultRatio"></span></div>
+                    <div style="font-size: 14px; color: #6b7280;">Your video is ready for download</div>
+                </div>
+
+                <div class="video-preview">
+                    <div class="video-container">
+                        <video id="resultPlayer" class="video-player" controls></video>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn-primary" id="downloadBtn">
+                        ⬇️ Download Video
+                    </button>
+                    <button class="btn-secondary" id="newVideoBtn">
+                        ➕ Convert Another
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedFile = null;
+        let selectedRatio = null;
+        let resultVideoUrl = null;
+
+        // DOM Elements
+        const uploadSection = document.getElementById('uploadSection');
+        const progressSection = document.getElementById('progressSection');
+        const resultSection = document.getElementById('resultSection');
+        
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileName = document.getElementById('fileName');
+        
+        const ratioOptions = document.querySelectorAll('.ratio-option');
+        const convertBtn = document.getElementById('convertBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const newVideoBtn = document.getElementById('newVideoBtn');
+        
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const resultPlayer = document.getElementById('resultPlayer');
+        const resultRatio = document.getElementById('resultRatio');
+
+        function init() {
+            setupEventListeners();
+        }
+
+        function setupEventListeners() {
+            // File input
+            fileInput.addEventListener('change', handleFileSelect);
+            
+            // Drag and drop
+            uploadArea.addEventListener('dragover', handleDragOver);
+            uploadArea.addEventListener('dragleave', handleDragLeave);
+            uploadArea.addEventListener('drop', handleDrop);
+            
+            // Aspect ratio selection
+            ratioOptions.forEach(option => {
+                option.addEventListener('click', () => selectRatio(option.dataset.ratio));
+            });
+            
+            // Buttons
+            convertBtn.addEventListener('click', convertVideo);
+            resetBtn.addEventListener('click', resetForm);
+            downloadBtn.addEventListener('click', downloadVideo);
+            newVideoBtn.addEventListener('click', resetForm);
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            uploadArea.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                processFile(files[0]);
+            }
+        }
+
+        function handleFileSelect(e) {
+            if (e.target.files.length > 0) {
+                processFile(e.target.files[0]);
+            }
+        }
+
+        function processFile(file) {
+            if (!file.type.startsWith('video/')) {
+                alert('Please select a valid video file');
+                return;
+            }
+
+            if (file.size > 200 * 1024 * 1024) {
+                alert('File size should be less than 200MB');
+                return;
+            }
+
+            selectedFile = file;
+            fileName.textContent = file.name;
+            uploadArea.classList.add('has-file');
+            checkReadyToConvert();
+        }
+
+        function selectRatio(ratio) {
+            // Remove previous selection
+            ratioOptions.forEach(option => option.classList.remove('selected'));
+            
+            // Add selection to clicked option
+            document.querySelector(`[data-ratio="${ratio}"]`).classList.add('selected');
+            
+            selectedRatio = ratio;
+            checkReadyToConvert();
+        }
+
+        function checkReadyToConvert() {
+            if (selectedFile && selectedRatio) {
+                convertBtn.disabled = false;
+            }
+        }
+
+        function showProgress() {
+            uploadSection.style.display = 'none';
+            progressSection.style.display = 'block';
+            
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 8;
+                if (progress > 95) progress = 95;
+                updateProgress(progress);
+            }, 1500);
+            
+            return interval;
+        }
+
+        function updateProgress(percent) {
+            progressFill.style.width = `${percent}%`;
+            if (percent < 30) {
+                progressText.textContent = 'Analyzing video dimensions...';
+            } else if (percent < 70) {
+                progressText.textContent = 'Converting aspect ratio...';
+            } else {
+                progressText.textContent = 'Finalizing video...';
+            }
+        }
+
+        async function convertVideo() {
+            if (!selectedFile || !selectedRatio) {
+                alert('Please select a video and aspect ratio');
+                return;
+            }
+
+            const progressInterval = showProgress();
+
+            try {
+                const formData = new FormData();
+                formData.append('video', selectedFile);
+                formData.append('aspect_ratio', selectedRatio);
+
+                const response = await fetch('/convert-aspect-ratio/', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status}`);
+                }
+
+                const result = await response.json();
+                
+                clearInterval(progressInterval);
+                updateProgress(100);
+                progressText.textContent = 'Complete!';
+                
+                setTimeout(() => {
+                    showResult(result.video_url, result.aspect_ratio);
+                }, 1000);
+
+            } catch (error) {
+                clearInterval(progressInterval);
+                console.error('Error converting video:', error);
+                alert('Failed to convert video. Please try again.');
+                resetToUpload();
+            }
+        }
+
+        async function showResult(videoUrl, aspectRatio) {
+            progressSection.style.display = 'none';
+            resultSection.style.display = 'block';
+            
+            resultRatio.textContent = aspectRatio;
+            
+            // Load the result video
+            const videoResponse = await fetch(videoUrl);
+            const videoBlob = await videoResponse.blob();
+            resultVideoUrl = URL.createObjectURL(videoBlob);
+            
+            resultPlayer.src = resultVideoUrl;
+            resultPlayer.load();
+        }
+
+        function downloadVideo() {
+            if (resultVideoUrl) {
+                const a = document.createElement('a');
+                a.href = resultVideoUrl;
+                a.download = `converted_${selectedRatio.replace(':', '-')}_${selectedFile.name}`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }
+        }
+
+        function resetForm() {
+            selectedFile = null;
+            selectedRatio = null;
+            
+            fileName.textContent = '';
+            uploadArea.classList.remove('has-file');
+            convertBtn.disabled = true;
+            
+            ratioOptions.forEach(option => option.classList.remove('selected'));
+            fileInput.value = '';
+            
+            uploadSection.style.display = 'block';
+            progressSection.style.display = 'none';
+            resultSection.style.display = 'none';
+            
+            if (resultVideoUrl) {
+                URL.revokeObjectURL(resultVideoUrl);
+                resultVideoUrl = null;
+            }
+        }
+
+        function resetToUpload() {
+            uploadSection.style.display = 'block';
+            progressSection.style.display = 'none';
+            resultSection.style.display = 'none';
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', init);
+
+        // Cleanup
+        window.addEventListener('beforeunload', () => {
+            if (resultVideoUrl) {
+                URL.revokeObjectURL(resultVideoUrl);
+            }
+        });
+    </script>
+</body>
+</html>

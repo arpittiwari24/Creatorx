@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Concatenate - Side by Side</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            background: #fafafa;
+            color: #0a0a0a;
+            line-height: 1.5;
+        }
+
+        .main-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 20px;
+            font-weight: 600;
+            color: #0a0a0a;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 12px;
+        }
+
+        .nav-link {
+            background: #0a0a0a;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: background-color 0.2s;
+        }
+
+        .nav-link:hover {
+            background: #1a1a1a;
+        }
+
+        .nav-link.secondary {
+            background: white;
+            color: #0a0a0a;
+            border: 1px solid #d1d5db;
+        }
+
+        .nav-link.secondary:hover {
+            background: #f9fafb;
+        }
+
+        .content {
+            flex: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            width: 100%;
+        }
+
+        .upload-section {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .upload-title {
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #0a0a0a;
+        }
+
+        .upload-subtitle {
+            font-size: 16px;
+            color: #6b7280;
+            margin-bottom: 32px;
+        }
+
+        .upload-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .upload-area {
+            border: 2px dashed #d1d5db;
+            border-radius: 12px;
+            padding: 48px 24px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            background: white;
+        }
+
+        .upload-area:hover {
+            border-color: #6b7280;
+            background: #f9fafb;
+        }
+
+        .upload-area.dragover {
+            border-color: #0a0a0a;
+            background: #f3f4f6;
+        }
+
+        .upload-area.has-file {
+            border-color: #10b981;
+            background: #f0fdf4;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            color: #9ca3af;
+            margin-bottom: 16px;
+        }
+
+        .upload-text {
+            color: #374151;
+            font-size: 16px;
+            margin-bottom: 16px;
+            font-weight: 500;
+        }
+
+        .upload-subtext {
+            color: #6b7280;
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+
+        .file-name {
+            color: #10b981;
+            font-weight: 600;
+            font-size: 14px;
+            margin-top: 8px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .btn-primary {
+            background: #0a0a0a;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary:hover {
+            background: #1a1a1a;
+        }
+
+        .btn-primary:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #0a0a0a;
+            border: 1px solid #d1d5db;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-secondary:hover {
+            background: #f9fafb;
+            border-color: #9ca3af;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            margin-top: 32px;
+        }
+
+        .progress-section {
+            display: none;
+            text-align: center;
+            margin: 40px 0;
+        }
+
+        .progress-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #0a0a0a;
+        }
+
+        .progress-bar {
+            background: #f3f4f6;
+            border-radius: 8px;
+            overflow: hidden;
+            height: 8px;
+            margin: 24px 0;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .progress-fill {
+            background: #0a0a0a;
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .result-section {
+            display: none;
+            text-align: center;
+            margin-top: 40px;
+        }
+
+        .video-preview {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid #e5e7eb;
+            margin-bottom: 24px;
+        }
+
+        .video-container {
+            position: relative;
+            max-width: 800px;
+            margin: 0 auto;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .video-player {
+            width: 100%;
+            height: auto;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 768px) {
+            .upload-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .upload-area {
+                padding: 32px 16px;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-content">
+                <div class="logo">
+                    🎬 Video Concatenate
+                </div>
+                <div class="nav-links">
+                    <a href="/" class="nav-link secondary">🎯 AI Captions</a>
+                    <a href="/thumbnail-creator" class="nav-link secondary">🖼️ Thumbnail Creator</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content">
+            <!-- Upload Section -->
+            <div id="uploadSection" class="upload-section">
+                <h1 class="upload-title">Create Side-by-Side Videos</h1>
+                <p class="upload-subtitle">Upload your main video and a background video to create a side-by-side layout (85% main + 15% background)</p>
+                
+                <div class="upload-grid">
+                    <!-- Main Video Upload -->
+                    <div class="upload-area" id="mainUploadArea">
+                        <div class="upload-icon">📹</div>
+                        <div class="upload-text">Main Video (85%)</div>
+                        <div class="upload-subtext">Your primary content video</div>
+                        <button class="btn-primary" onclick="document.getElementById('mainFileInput').click()">
+                            Choose Main Video
+                        </button>
+                        <div class="file-name" id="mainFileName"></div>
+                        <input type="file" id="mainFileInput" class="file-input" accept="video/*">
+                    </div>
+
+                    <!-- Background Video Upload -->
+                    <div class="upload-area" id="bgUploadArea">
+                        <div class="upload-icon">🎮</div>
+                        <div class="upload-text">Background Video (15%)</div>
+                        <div class="upload-subtext">Subway Surfer or similar gameplay</div>
+                        <button class="btn-primary" onclick="document.getElementById('bgFileInput').click()">
+                            Choose Background Video
+                        </button>
+                        <div class="file-name" id="bgFileName"></div>
+                        <input type="file" id="bgFileInput" class="file-input" accept="video/*">
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn-primary" id="concatenateBtn" disabled>
+                        🔗 Concatenate Videos
+                    </button>
+                    <button class="btn-secondary" id="resetBtn">
+                        🔄 Reset
+                    </button>
+                </div>
+            </div>
+
+            <!-- Progress Section -->
+            <div id="progressSection" class="progress-section">
+                <h2 class="progress-title">Processing Videos...</h2>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text" id="progressText">Preparing videos...</div>
+            </div>
+
+            <!-- Result Section -->
+            <div id="resultSection" class="result-section">
+                <h2 style="margin-bottom: 24px; font-size: 24px; font-weight: 600;">Your Concatenated Video</h2>
+                
+                <div class="video-preview">
+                    <div class="video-container">
+                        <video id="resultPlayer" class="video-player" controls></video>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn-primary" id="downloadBtn">
+                        ⬇️ Download Video
+                    </button>
+                    <button class="btn-secondary" id="newVideoBtn">
+                        ➕ Create Another
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let mainFile = null;
+        let backgroundFile = null;
+        let resultVideoUrl = null;
+
+        // DOM Elements
+        const uploadSection = document.getElementById('uploadSection');
+        const progressSection = document.getElementById('progressSection');
+        const resultSection = document.getElementById('resultSection');
+        
+        const mainUploadArea = document.getElementById('mainUploadArea');
+        const bgUploadArea = document.getElementById('bgUploadArea');
+        const mainFileInput = document.getElementById('mainFileInput');
+        const bgFileInput = document.getElementById('bgFileInput');
+        const mainFileName = document.getElementById('mainFileName');
+        const bgFileName = document.getElementById('bgFileName');
+        
+        const concatenateBtn = document.getElementById('concatenateBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const newVideoBtn = document.getElementById('newVideoBtn');
+        
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const resultPlayer = document.getElementById('resultPlayer');
+
+        function init() {
+            setupEventListeners();
+        }
+
+        function setupEventListeners() {
+            // File inputs
+            mainFileInput.addEventListener('change', handleMainFileSelect);
+            bgFileInput.addEventListener('change', handleBgFileSelect);
+            
+            // Drag and drop for main video
+            mainUploadArea.addEventListener('dragover', handleDragOver);
+            mainUploadArea.addEventListener('dragleave', handleDragLeave);
+            mainUploadArea.addEventListener('drop', (e) => handleDrop(e, 'main'));
+            
+            // Drag and drop for background video
+            bgUploadArea.addEventListener('dragover', handleDragOver);
+            bgUploadArea.addEventListener('dragleave', handleDragLeave);
+            bgUploadArea.addEventListener('drop', (e) => handleDrop(e, 'bg'));
+            
+            // Buttons
+            concatenateBtn.addEventListener('click', concatenateVideos);
+            resetBtn.addEventListener('click', resetForm);
+            downloadBtn.addEventListener('click', downloadVideo);
+            newVideoBtn.addEventListener('click', resetForm);
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.currentTarget.classList.remove('dragover');
+        }
+
+        function handleDrop(e, type) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                if (type === 'main') {
+                    processMainFile(files[0]);
+                } else {
+                    processBgFile(files[0]);
+                }
+            }
+        }
+
+        function handleMainFileSelect(e) {
+            if (e.target.files.length > 0) {
+                processMainFile(e.target.files[0]);
+            }
+        }
+
+        function handleBgFileSelect(e) {
+            if (e.target.files.length > 0) {
+                processBgFile(e.target.files[0]);
+            }
+        }
+
+        function processMainFile(file) {
+            if (!file.type.startsWith('video/')) {
+                alert('Please select a valid video file');
+                return;
+            }
+
+            if (file.size > 200 * 1024 * 1024) {
+                alert('File size should be less than 200MB');
+                return;
+            }
+
+            mainFile = file;
+            mainFileName.textContent = file.name;
+            mainUploadArea.classList.add('has-file');
+            checkReadyToConcatenate();
+        }
+
+        function processBgFile(file) {
+            if (!file.type.startsWith('video/')) {
+                alert('Please select a valid video file');
+                return;
+            }
+
+            if (file.size > 200 * 1024 * 1024) {
+                alert('File size should be less than 200MB');
+                return;
+            }
+
+            backgroundFile = file;
+            bgFileName.textContent = file.name;
+            bgUploadArea.classList.add('has-file');
+            checkReadyToConcatenate();
+        }
+
+        function checkReadyToConcatenate() {
+            if (mainFile && backgroundFile) {
+                concatenateBtn.disabled = false;
+            }
+        }
+
+        function showProgress() {
+            uploadSection.style.display = 'none';
+            progressSection.style.display = 'block';
+            
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 10;
+                if (progress > 95) progress = 95;
+                updateProgress(progress);
+            }, 1000);
+            
+            return interval;
+        }
+
+        function updateProgress(percent) {
+            progressFill.style.width = `${percent}%`;
+            if (percent < 30) {
+                progressText.textContent = 'Preparing videos...';
+            } else if (percent < 70) {
+                progressText.textContent = 'Resizing and positioning...';
+            } else {
+                progressText.textContent = 'Finalizing concatenation...';
+            }
+        }
+
+        async function concatenateVideos() {
+            if (!mainFile || !backgroundFile) {
+                alert('Please select both videos');
+                return;
+            }
+
+            const progressInterval = showProgress();
+
+            try {
+                const formData = new FormData();
+                formData.append('main_video', mainFile);
+                formData.append('background_video', backgroundFile);
+
+                const response = await fetch('/concatenate-videos/', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status}`);
+                }
+
+                const result = await response.json();
+                
+                clearInterval(progressInterval);
+                updateProgress(100);
+                progressText.textContent = 'Complete!';
+                
+                setTimeout(() => {
+                    showResult(result.video_url);
+                }, 1000);
+
+            } catch (error) {
+                clearInterval(progressInterval);
+                console.error('Error concatenating videos:', error);
+                alert('Failed to concatenate videos. Please try again.');
+                resetToUpload();
+            }
+        }
+
+        async function showResult(videoUrl) {
+            progressSection.style.display = 'none';
+            resultSection.style.display = 'block';
+            
+            // Load the result video
+            const videoResponse = await fetch(videoUrl);
+            const videoBlob = await videoResponse.blob();
+            resultVideoUrl = URL.createObjectURL(videoBlob);
+            
+            resultPlayer.src = resultVideoUrl;
+            resultPlayer.load();
+        }
+
+        function downloadVideo() {
+            if (resultVideoUrl) {
+                const a = document.createElement('a');
+                a.href = resultVideoUrl;
+                a.download = `concatenated_${mainFile.name}`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }
+        }
+
+        function resetForm() {
+            mainFile = null;
+            backgroundFile = null;
+            
+            mainFileName.textContent = '';
+            bgFileName.textContent = '';
+            mainUploadArea.classList.remove('has-file');
+            bgUploadArea.classList.remove('has-file');
+            concatenateBtn.disabled = true;
+            
+            mainFileInput.value = '';
+            bgFileInput.value = '';
+            
+            uploadSection.style.display = 'block';
+            progressSection.style.display = 'none';
+            resultSection.style.display = 'none';
+            
+            if (resultVideoUrl) {
+                URL.revokeObjectURL(resultVideoUrl);
+                resultVideoUrl = null;
+            }
+        }
+
+        function resetToUpload() {
+            uploadSection.style.display = 'block';
+            progressSection.style.display = 'none';
+            resultSection.style.display = 'none';
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', init);
+
+        // Cleanup
+        window.addEventListener('beforeunload', () => {
+            if (resultVideoUrl) {
+                URL.revokeObjectURL(resultVideoUrl);
+            }
+        });
+    </script>
+</body>
+</html>
