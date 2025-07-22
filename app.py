@@ -128,7 +128,11 @@ def split_text_into_chunks(text: str, start_time: float, end_time: float, font_s
 
 @app.get("/")
 async def index():
-    return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
+    return FileResponse(os.path.join(FRONTEND_DIR, "main.html"))
+
+@app.get("/captions")
+async def captions():
+    return FileResponse(os.path.join(FRONTEND_DIR, "captions.html"))
 
 @app.get("/thumbnail-creator")
 async def thumbnail_creator():
