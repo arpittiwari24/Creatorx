@@ -146,6 +146,10 @@ async def video_concatenate():
 async def aspect_ratio_converter():
     return FileResponse(os.path.join(FRONTEND_DIR, "aspect-ratio-converter.html"))
 
+@app.get("/video-rotator")
+async def video_rotator():
+    return FileResponse(os.path.join(FRONTEND_DIR, "video-rotator.html"))
+
 @app.post("/upload/")
 async def upload_video(file: UploadFile, font_size: int = Form(24), font_color: str = Form("white"), text_height: int = Form(75)):
     print(f"Received file: {file.filename}, font_size: {font_size}, font_color: {font_color}, text_height: {text_height}")
@@ -608,6 +612,144 @@ async def convert_aspect_ratio(
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error converting aspect ratio: {str(e)}")
+    
+    finally:
+        # Clean up input file
+        try:
+            if os.path.exists(input_path):
+                os.remove(input_path)
+        except Exception as cleanup_error:
+            print(f"Warning: Could not clean up input file: {cleanup_error}")
+
+def rotate_video(input_path: str, output_path: str, rotation_angle: int):
+    """Rotate video by specified angle (90, 180, 270, 360 degrees)"""
+    try:
+        print(f"Loading video for rotation: {input_path}")
+        clip = VideoFileClip(input_path)
+        
+        print(f"Original video: {clip.w}x{clip.h}, duration={clip.duration}s")
+        print(f"Rotating by {rotation_angle} degrees")
+        
+        # Apply rotation based on angle with proper dimension handling
+        original_width = clip.w
+        original_height = clip.h
+        
+        if rotation_angle == 90:
+            # Rotate 90 degrees clockwise - dimensions swap (w becomes h, h becomes w)
+            rotated_clip = clip.rotated(-90)
+            # For 90° rotation, manually set the canvas size to swapped dimensions
+            new_width = original_height
+            new_height = original_width
+            print(f"90° rotation: {original_width}x{original_height} -> {new_width}x{new_height}")
+            # Resize the canvas to accommodate the rotated video
+            rotated_clip = rotated_clip.resized(new_size=(new_width, new_height))
+            
+        elif rotation_angle == 180:
+            # Rotate 180 degrees - dimensions stay the same
+            rotated_clip = clip.rotated(180)
+            new_width = original_width
+            new_height = original_height
+            print(f"180° rotation: dimensions stay {new_width}x{new_height}")
+            
+        elif rotation_angle == 270:
+            # Rotate 270 degrees clockwise - dimensions swap (w becomes h, h becomes w)
+            rotated_clip = clip.rotated(90)
+            # For 270° rotation, manually set the canvas size to swapped dimensions
+            new_width = original_height
+            new_height = original_width
+            print(f"270° rotation: {original_width}x{original_height} -> {new_width}x{new_height}")
+            # Resize the canvas to accommodate the rotated video
+            rotated_clip = rotated_clip.resized(new_size=(new_width, new_height))
+            
+        elif rotation_angle == 360:
+            # 360 degrees = no rotation, dimensions stay the same
+            rotated_clip = clip
+            new_width = original_width
+            new_height = original_height
+            print(f"360° rotation (no change): {new_width}x{new_height}")
+            
+        else:
+            raise ValueError(f"Unsupported rotation angle: {rotation_angle}")
+        
+        print(f"Final video dimensions: {rotated_clip.w}x{rotated_clip.h}")
+        
+        # Write the output
+        print(f"Writing rotated video to: {output_path}")
+        rotated_clip.write_videofile(
+            output_path,
+            codec="libx264",
+            audio_codec="aac",
+            temp_audiofile="temp-audio-rotate.m4a",
+            remove_temp=True,
+            preset="fast",
+            ffmpeg_params=["-crf", "23"]
+        )
+        
+        print("Video rotation completed successfully!")
+        
+        # Clean up
+        clip.close()
+        rotated_clip.close()
+        
+        return output_path
+        
+    except Exception as e:
+        print(f"Error in rotate_video: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise e
+
+@app.post("/rotate-video/")
+async def rotate_video_endpoint(
+    video: UploadFile,
+    rotation_angle: int = Form(...)
+):
+    """Rotate video by specified angle"""
+    
+    # Validate rotation angle
+    valid_angles = [90, 180, 270, 360]
+    if rotation_angle not in valid_angles:
+        raise HTTPException(status_code=400, detail=f"Rotation angle must be one of: {valid_angles}")
+    
+    # Generate unique ID for this operation
+    operation_id = str(uuid.uuid4())
+    
+    # Save uploaded video
+    input_path = os.path.join(UPLOAD_DIR, f"{operation_id}_input.mp4")
+    output_path = os.path.join(PROCESSED_DIR, f"{operation_id}_rotated_{rotation_angle}.mp4")
+    
+    # Write video file
+    with open(input_path, "wb") as f:
+        f.write(await video.read())
+    
+    try:
+        print(f"Starting video rotation: input={input_path}, angle={rotation_angle}")
+        
+        # Check if input file exists and has content
+        if not os.path.exists(input_path) or os.path.getsize(input_path) == 0:
+            raise Exception("Input video file is empty or missing")
+        
+        # Perform video rotation
+        rotate_video(input_path, output_path, rotation_angle)
+        
+        # Check if output was created
+        if not os.path.exists(output_path):
+            raise Exception("Rotated video was not created")
+        
+        print(f"Video rotation successful: {output_path}")
+        
+        return JSONResponse({
+            "success": True,
+            "operation_id": operation_id,
+            "rotation_angle": rotation_angle,
+            "video_url": f"/download/{os.path.basename(output_path)}"
+        })
+        
+    except Exception as e:
+        print(f"Error in rotate_video_endpoint: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error rotating video: {str(e)}")
     
     finally:
         # Clean up input file
