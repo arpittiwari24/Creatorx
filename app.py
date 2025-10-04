@@ -38,14 +38,43 @@ async def generate_captions(video: UploadFile = File(...)):
         # Transcribe video using Whisper
         segments, _ = model.transcribe(video_path, word_timestamps=True)
 
-        # Extract captions with timestamps
+        # Extract captions with timestamps, split into 4-second chunks max
         captions = []
+        MAX_DURATION = 5.0  # Maximum 4 seconds per caption
+
         for segment in segments:
-            captions.append({
-                "start": segment.start,
-                "end": segment.end,
-                "text": segment.text.strip()
-            })
+            segment_duration = segment.end - segment.start
+
+            if segment_duration <= MAX_DURATION:
+                # Segment is already short enough
+                captions.append({
+                    "start": segment.start,
+                    "end": segment.end,
+                    "text": segment.text.strip()
+                })
+            else:
+                # Split long segments into smaller chunks
+                words = segment.text.strip().split()
+                if not words:
+                    continue
+
+                num_chunks = int(segment_duration / MAX_DURATION) + 1
+                words_per_chunk = max(1, len(words) // num_chunks)
+
+                current_start = segment.start
+                chunk_duration = segment_duration / num_chunks
+
+                for i in range(0, len(words), words_per_chunk):
+                    chunk_words = words[i:i + words_per_chunk]
+                    chunk_end = min(current_start + chunk_duration, segment.end)
+
+                    captions.append({
+                        "start": current_start,
+                        "end": chunk_end,
+                        "text": " ".join(chunk_words)
+                    })
+
+                    current_start = chunk_end
 
         # Clean up - remove uploaded video
         if os.path.exists(video_path):
