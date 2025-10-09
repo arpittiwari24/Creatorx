@@ -22,6 +22,12 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 # Load Whisper model once at startup
 model = WhisperModel("base", compute_type="int8")
 
+@app.get("/")
+def test_function():
+    return JSONResponse({
+        "success" : "working"
+    })
+
 @app.post("/generate-captions")
 async def generate_captions(video: UploadFile = File(...)):
     """
