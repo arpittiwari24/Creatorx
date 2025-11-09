@@ -1,10 +1,11 @@
 import os
 import uuid
+import subprocess
 from fastapi import FastAPI, UploadFile, File, HTTPException, Form
 from fastapi.responses import JSONResponse
 from faster_whisper import WhisperModel
 from fastapi.middleware.cors import CORSMiddleware
-from typing import Optional
+from typing import Optional, List
 
 app = FastAPI()
 
@@ -22,6 +23,28 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 # Load Whisper model once at startup
 model = WhisperModel("base", compute_type="int8")
+
+def get_video_duration(video_path: str) -> float:
+    """
+    Get the duration of a video file in seconds using ffprobe
+    """
+    try:
+        result = subprocess.run(
+            [
+                "ffprobe",
+                "-v", "error",
+                "-show_entries", "format=duration",
+                "-of", "default=noprint_wrappers=1:nokey=1",
+                video_path
+            ],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        return float(result.stdout.strip())
+    except Exception as e:
+        raise Exception(f"Failed to get video duration: {str(e)}")
+
 
 @app.get("/")
 def test_function():
@@ -157,6 +180,8 @@ async def generate_captions(
         # Clean up - remove uploaded video
         if os.path.exists(video_path):
             os.remove(video_path)
+        
+        print(f"Generated {captions} captions for video {video.filename}")
 
         return JSONResponse({
             "success": True,
