@@ -24,86 +24,11 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 # Load Whisper model once at startup
 model = WhisperModel("base", compute_type="int8")
 
-def get_video_duration(video_path: str) -> float:
-    """
-    Get the duration of a video file in seconds using ffprobe
-    """
-    try:
-        result = subprocess.run(
-            [
-                "ffprobe",
-                "-v", "error",
-                "-show_entries", "format=duration",
-                "-of", "default=noprint_wrappers=1:nokey=1",
-                video_path
-            ],
-            capture_output=True,
-            text=True,
-            check=True
-        )
-        return float(result.stdout.strip())
-    except Exception as e:
-        raise Exception(f"Failed to get video duration: {str(e)}")
-
-
-def split_into_lines(words_data: List[dict], max_words_per_line: int) -> List[List[dict]]:
-    """
-    Split words into lines based on max_words_per_line constraint
-    Returns list of lines, where each line is a list of word dictionaries
-    """
-    if max_words_per_line <= 0:
-        # No limit - return all words as single line
-        return [words_data]
-
-    lines = []
-    current_line = []
-
-    for word_data in words_data:
-        current_line.append(word_data)
-
-        # Check if we've reached the word limit for this line
-        if len(current_line) >= max_words_per_line:
-            lines.append(current_line)
-            current_line = []
-
-    # Add remaining words as final line
-    if current_line:
-        lines.append(current_line)
-
-    return lines
-
-
-def create_caption_from_lines(lines: List[List[dict]]) -> dict:
-    """
-    Create a caption object from a list of lines
-    """
-    if not lines:
-        return None
-
-    all_words = [word for line in lines for word in line]
-
-    # Format text with line breaks
-    text_lines = []
-    for line in lines:
-        line_text = " ".join([w["word"] for w in line])
-        text_lines.append(line_text)
-
-    caption_text = "\n".join(text_lines)
-
-    return {
-        "start": all_words[0]["start"],
-        "end": all_words[-1]["end"],
-        "text": caption_text,
-        "words": all_words
-    }
-
-
 @app.get("/")
 def test_function():
     return JSONResponse({
-        "success": "working"
+        "success" : "working"
     })
-
 
 @app.post("/generate-captions")
 async def generate_captions(
@@ -119,13 +44,13 @@ async def generate_captions(
     - maxLines: Maximum number of lines per caption (default: 2)
     - maxWordsPerLine: Maximum words per line (default: 0 = unlimited)
     """
-    video_path = None
     try:
         # Parse formatting parameters
         max_lines = int(maxLines)
         max_words_per_line = int(maxWordsPerLine)
 
-        print(f"Processing with maxLines={max_lines}, maxWordsPerLine={max_words_per_line}")
+        # Calculate words per caption segment
+        words_per_segment = max_lines * (max_words_per_line if max_words_per_line > 0 else 999)
 
         # Save uploaded video temporarily
         video_id = str(uuid.uuid4())
@@ -153,7 +78,7 @@ async def generate_captions(
                     for word in segment.words
                 ]
 
-            # If no word timestamps available, fall back to simple text
+            # If no word timestamps available, fall back to simple text splitting
             if not word_timestamps:
                 captions.append({
                     "start": segment.start,
@@ -163,20 +88,33 @@ async def generate_captions(
                 })
                 continue
 
-            # Process words into captions respecting maxLines and maxWordsPerLine
-            current_caption_words = []
+            # Group words into caption chunks respecting word limits and natural boundaries
+            current_chunk_words = []
 
             for i, word_data in enumerate(word_timestamps):
-                current_caption_words.append(word_data)
+                # Check if adding this word would exceed the limit
+                would_exceed_limit = len(current_chunk_words) >= words_per_segment
 
-                # Check if this is the last word in the segment
+                # If we would exceed and we have words, create a caption first
+                if would_exceed_limit and current_chunk_words:
+                    chunk_text = " ".join([w["word"] for w in current_chunk_words])
+                    chunk_start = current_chunk_words[0]["start"]
+                    chunk_end = current_chunk_words[-1]["end"]
+
+                    captions.append({
+                        "start": chunk_start,
+                        "end": chunk_end,
+                        "text": chunk_text,
+                        "words": current_chunk_words.copy()
+                    })
+
+                    current_chunk_words = []
+
+                # Now add the current word
+                current_chunk_words.append(word_data)
+
+                # Check if this is the last word
                 is_last_word = (i == len(word_timestamps) - 1)
-
-                # Split current words into lines
-                lines = split_into_lines(current_caption_words, max_words_per_line)
-
-                # Check if we've exceeded max_lines
-                exceeded_max_lines = max_lines > 0 and len(lines) > max_lines
 
                 # Check for natural pause (gap between words > 0.3 seconds)
                 has_pause = False
@@ -187,48 +125,41 @@ async def generate_captions(
 
                 # Check for punctuation indicating natural break
                 word_text = word_data["word"]
-                has_punctuation = any(p in word_text for p in ['.', '!', '?'])
+                has_punctuation = any(p in word_text for p in ['.', '!', '?', ',', ';'])
 
-                # Decide when to create a caption
-                should_create_caption = False
+                # Determine when to break at natural boundaries
+                should_break = False
 
-                if exceeded_max_lines:
-                    # Remove the last word and create caption with remaining words
-                    current_caption_words.pop()
-                    should_create_caption = True
+                # Break at natural pauses if we have at least half the target words
+                if has_pause and len(current_chunk_words) >= max(1, words_per_segment // 2):
+                    should_break = True
+                # Break at punctuation if we have at least half the target words
+                elif has_punctuation and len(current_chunk_words) >= max(1, words_per_segment // 2):
+                    should_break = True
+                # Always break at the last word
                 elif is_last_word:
-                    # Always create caption at the end
-                    should_create_caption = True
-                elif has_punctuation and len(current_caption_words) >= 3:
-                    # Create caption at sentence end if we have enough words
-                    should_create_caption = True
-                elif has_pause and len(current_caption_words) >= 3:
-                    # Create caption at natural pause if we have enough words
-                    should_create_caption = True
+                    should_break = True
 
-                if should_create_caption and current_caption_words:
-                    # Split words into lines and create caption
-                    lines = split_into_lines(current_caption_words, max_words_per_line)
+                if should_break and current_chunk_words:
+                    # Create caption from current chunk
+                    chunk_text = " ".join([w["word"] for w in current_chunk_words])
+                    chunk_start = current_chunk_words[0]["start"]
+                    chunk_end = current_chunk_words[-1]["end"]
 
-                    # If we have maxLines limit, only take first maxLines
-                    if max_lines > 0 and len(lines) > max_lines:
-                        lines = lines[:max_lines]
+                    captions.append({
+                        "start": chunk_start,
+                        "end": chunk_end,
+                        "text": chunk_text,
+                        "words": current_chunk_words.copy()
+                    })
 
-                    caption = create_caption_from_lines(lines)
-                    if caption:
-                        captions.append(caption)
-
-                    # Reset for next caption, but keep the word we removed if we exceeded
-                    if exceeded_max_lines:
-                        current_caption_words = [word_data]
-                    else:
-                        current_caption_words = []
+                    current_chunk_words = []
 
         # Clean up - remove uploaded video
         if os.path.exists(video_path):
             os.remove(video_path)
-
-        print(f"Generated {len(captions)} captions for video {video.filename}")
+        
+        print(f"Generated {captions} captions.")
 
         return JSONResponse({
             "success": True,
@@ -237,12 +168,10 @@ async def generate_captions(
 
     except Exception as e:
         # Clean up on error
-        if video_path and os.path.exists(video_path):
+        if os.path.exists(video_path):
             os.remove(video_path)
 
-        print(f"Error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
-
 
 if __name__ == "__main__":
     import uvicorn
